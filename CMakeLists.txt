@@ -22,7 +22,7 @@ idf_component_register(
     "esp32c3"
     "esp32c6"
   INCLUDE_DIRS
-    "src"
+    "include"
   SRCS
     "src/NimBLE2904.cpp"
     "src/NimBLEAddress.cpp"

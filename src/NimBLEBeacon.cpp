@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED)
 
-#include <string.h>
+#include <cstring>
 #include <algorithm>
-#include "NimBLEBeacon.h"
-#include "NimBLELog.h"
+#include "nimble/NimBLEBeacon.hpp"
+#include "nimble/NimBLELog.hpp"
 
 #define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00)>>8) + (((x)&0xFF)<<8))
 

@@ -13,13 +13,13 @@
 // limitations under the License.
 #pragma once
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
 
-#include "NimBLECharacteristic.h"
-#include "NimBLEService.h"
-#include "NimBLEDescriptor.h"
-#include "HIDTypes.h"
+#include "nimble/NimBLECharacteristic.hpp"
+#include "nimble/NimBLEService.hpp"
+#include "nimble/NimBLEDescriptor.hpp"
+#include "nimble/HIDTypes.hpp"
 
 #define GENERIC_HID		0x03C0
 #define HID_KEYBOARD	   0x03C1

@@ -14,15 +14,15 @@
 
 #pragma once
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
-#include "NimBLERemoteService.h"
-#include "NimBLERemoteDescriptor.h"
+#include "nimble/NimBLERemoteService.hpp"
+#include "nimble/NimBLERemoteDescriptor.hpp"
 
 #include <vector>
 #include <functional>
-#include "NimBLELog.h"
+#include "nimble/NimBLELog.hpp"
 
 class NimBLERemoteService;
 class NimBLERemoteDescriptor;

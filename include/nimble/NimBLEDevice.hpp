@@ -14,35 +14,33 @@
 
 #pragma once
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED)
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
-#include "NimBLEScan.h"
+#include "nimble/NimBLEScan.hpp"
 #endif
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
 #  if CONFIG_BT_NIMBLE_EXT_ADV
-#    include "NimBLEExtAdvertising.h"
+#    include "nimble/NimBLEExtAdvertising.hpp"
 #  else
-#    include "NimBLEAdvertising.h"
+#    include "nimble/NimBLEAdvertising.hpp"
 #  endif
 #endif
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-#include "NimBLEClient.h"
+#include "nimble/NimBLEClient.hpp"
 #endif
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
-#include "NimBLEServer.h"
+#include "nimble/NimBLEServer.hpp"
 #endif
 
-#include "NimBLEUtils.h"
-#include "NimBLEAddress.h"
+#include "nimble/NimBLEUtils.hpp"
+#include "nimble/NimBLEAddress.hpp"
 
-#ifdef ESP_PLATFORM
 #  include "esp_bt.h"
-#endif
 
 #include <map>
 #include <string>
@@ -78,12 +76,6 @@
 #define BLEEddystoneTLM                 NimBLEEddystoneTLM
 #define BLEEddystoneURL                 NimBLEEddystoneURL
 #define BLEConnInfo                     NimBLEConnInfo
-
-#ifdef CONFIG_BT_NIMBLE_MAX_CONNECTIONS
-#define NIMBLE_MAX_CONNECTIONS          CONFIG_BT_NIMBLE_MAX_CONNECTIONS
-#else
-#define NIMBLE_MAX_CONNECTIONS          CONFIG_NIMBLE_MAX_CONNECTIONS
-#endif
 
 typedef int (*gap_event_handler)(ble_gap_event *event, void *arg);
 

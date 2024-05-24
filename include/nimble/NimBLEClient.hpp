@@ -14,16 +14,16 @@
 
 #pragma once
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
-#include "NimBLEAddress.h"
-#include "NimBLEUUID.h"
-#include "NimBLEUtils.h"
-#include "NimBLEConnInfo.h"
-#include "NimBLEAttValue.h"
-#include "NimBLEAdvertisedDevice.h"
-#include "NimBLERemoteService.h"
+#include "nimble/NimBLEAddress.hpp"
+#include "nimble/NimBLEUUID.hpp"
+#include "nimble/NimBLEUtils.hpp"
+#include "nimble/NimBLEConnInfo.hpp"
+#include "nimble/NimBLEAttValue.hpp"
+#include "nimble/NimBLEAdvertisedDevice.hpp"
+#include "nimble/NimBLERemoteService.hpp"
 
 #include <vector>
 #include <string>

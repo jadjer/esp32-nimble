@@ -14,24 +14,20 @@
 
 #pragma once
 
-#include "nimconfig.h"
-#if (defined(CONFIG_BT_ENABLED) && \
+#include "sdkconfig.h"
+#if (defined(CONFIG_BT_NIMBLE_ENABLED) && \
     defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER) && \
-    !CONFIG_BT_NIMBLE_EXT_ADV) || defined(_DOXYGEN_)
+    !CONFIG_BT_NIMBLE_EXT_ADV)
 
-#if defined(CONFIG_NIMBLE_CPP_IDF)
 #include "host/ble_gap.h"
-#else
-#include "nimble/nimble/host/include/host/ble_gap.h"
-#endif
 
 /****  FIX COMPILATION ****/
 #undef min
 #undef max
 /**************************/
 
-#include "NimBLEUUID.h"
-#include "NimBLEAddress.h"
+#include "nimble/NimBLEUUID.hpp"
+#include "nimble/NimBLEAddress.hpp"
 
 #include <vector>
 

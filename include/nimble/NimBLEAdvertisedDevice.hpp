@@ -14,22 +14,18 @@
 
 #pragma once
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
 
-#include "NimBLEAddress.h"
-#include "NimBLEScan.h"
-#include "NimBLEUUID.h"
+#include "nimble/NimBLEAddress.hpp"
+#include "nimble/NimBLEScan.hpp"
+#include "nimble/NimBLEUUID.hpp"
 
-#if defined(CONFIG_NIMBLE_CPP_IDF)
 #include "host/ble_hs_adv.h"
-#else
-#include "nimble/nimble/host/include/host/ble_hs_adv.h"
-#endif
 
 #include <map>
 #include <vector>
-#include <time.h>
+#include <ctime>
 
 
 class NimBLEScan;

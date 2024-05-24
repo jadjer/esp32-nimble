@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 /* */
 #define HID_VERSION_1_11    (0x0111)

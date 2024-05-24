@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
-#include "NimBLECharacteristic.h"
-#include "NimBLE2904.h"
-#include "NimBLEDevice.h"
-#include "NimBLELog.h"
+#include "nimble/NimBLECharacteristic.hpp"
+#include "nimble/NimBLE2904.hpp"
+#include "nimble/NimBLEDevice.hpp"
+#include "nimble/NimBLELog.hpp"
 
 #define NULL_HANDLE (0xffff)
 #define NIMBLE_SUB_NOTIFY   0x0001

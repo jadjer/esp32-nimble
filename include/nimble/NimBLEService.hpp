@@ -14,12 +14,12 @@
 
 #pragma once
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
-#include "NimBLEServer.h"
-#include "NimBLECharacteristic.h"
-#include "NimBLEUUID.h"
+#include "nimble/NimBLEServer.hpp"
+#include "nimble/NimBLECharacteristic.hpp"
+#include "nimble/NimBLEUUID.hpp"
 
 
 class NimBLEServer;

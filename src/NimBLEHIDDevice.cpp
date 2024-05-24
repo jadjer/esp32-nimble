@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
-#include "NimBLEHIDDevice.h"
-#include "NimBLE2904.h"
+#include "nimble/NimBLEHIDDevice.hpp"
+#include "nimble/NimBLE2904.hpp"
 
 /**
  * @brief Construct a default NimBLEHIDDevice object.

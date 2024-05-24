@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
-#include "NimBLEClient.h"
-#include "NimBLEDevice.h"
-#include "NimBLELog.h"
+#include "nimble/NimBLEClient.hpp"
+#include "nimble/NimBLEDevice.hpp"
+#include "nimble/NimBLELog.hpp"
 
 #include <string>
 #include <unordered_set>

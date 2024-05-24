@@ -14,14 +14,10 @@
 
 #pragma once
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
-#if defined(CONFIG_NIMBLE_CPP_IDF)
 #include "host/ble_hs.h"
-#else
-#include "nimble/nimble/host/include/host/ble_hs.h"
-#endif
 
 /****  FIX COMPILATION ****/
 #undef min
@@ -43,10 +39,10 @@ typedef enum {
     INDICATE     =  BLE_GATT_CHR_F_INDICATE
 } NIMBLE_PROPERTY;
 
-#include "NimBLEService.h"
-#include "NimBLEDescriptor.h"
-#include "NimBLEAttValue.h"
-#include "NimBLEConnInfo.h"
+#include "nimble/NimBLEService.hpp"
+#include "nimble/NimBLEDescriptor.hpp"
+#include "nimble/NimBLEAttValue.hpp"
+#include "nimble/NimBLEConnInfo.hpp"
 
 #include <string>
 #include <vector>

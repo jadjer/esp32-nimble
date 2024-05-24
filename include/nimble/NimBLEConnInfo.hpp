@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "NimBLEAddress.h"
+#include "nimble/NimBLEAddress.hpp"
 
 /**
  * @brief Connection information.

@@ -14,13 +14,13 @@
 
 #pragma once
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
-#include "NimBLECharacteristic.h"
-#include "NimBLEUUID.h"
-#include "NimBLEAttValue.h"
-#include "NimBLEConnInfo.h"
+#include "nimble/NimBLECharacteristic.hpp"
+#include "nimble/NimBLEUUID.hpp"
+#include "nimble/NimBLEAttValue.hpp"
+#include "nimble/NimBLEConnInfo.hpp"
 
 #include <string>
 

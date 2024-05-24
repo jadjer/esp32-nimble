@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED)
 
 #include <algorithm>
 
-#include "NimBLEAddress.h"
-#include "NimBLEUtils.h"
-#include "NimBLELog.h"
+#include "nimble/NimBLEAddress.hpp"
+#include "nimble/NimBLEUtils.hpp"
+#include "nimble/NimBLELog.hpp"
 
 static const char* LOG_TAG = "NimBLEAddress";
 

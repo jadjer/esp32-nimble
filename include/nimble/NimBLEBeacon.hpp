@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "NimBLEUUID.h"
+#include "nimble/NimBLEUUID.hpp"
 /**
  * @brief Representation of a beacon.
  * See:

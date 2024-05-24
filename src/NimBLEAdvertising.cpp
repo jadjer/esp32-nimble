@@ -12,21 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "nimconfig.h"
-#if (defined(CONFIG_BT_ENABLED) && \
-    defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER) && \
-    !CONFIG_BT_NIMBLE_EXT_ADV) || defined(_DOXYGEN_)
+#include "sdkconfig.h"
+#if (defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER) && !CONFIG_BT_NIMBLE_EXT_ADV)
 
-#if defined(CONFIG_NIMBLE_CPP_IDF)
 #include "services/gap/ble_svc_gap.h"
-#else
-#include "nimble/nimble/host/services/gap/include/services/gap/ble_svc_gap.h"
-#endif
-#include "NimBLEAdvertising.h"
-#include "NimBLEDevice.h"
-#include "NimBLEServer.h"
-#include "NimBLEUtils.h"
-#include "NimBLELog.h"
+
+#include "nimble/NimBLEAdvertising.hpp"
+#include "nimble/NimBLEDevice.hpp"
+#include "nimble/NimBLEServer.hpp"
+#include "nimble/NimBLEUtils.hpp"
+#include "nimble/NimBLELog.hpp"
 
 static const char* LOG_TAG = "NimBLEAdvertising";
 

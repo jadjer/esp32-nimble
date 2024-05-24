@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && \
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED) && \
     defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER) && \
     CONFIG_BT_NIMBLE_EXT_ADV
 

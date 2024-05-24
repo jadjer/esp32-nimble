@@ -14,23 +14,23 @@
 
 #pragma once
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
 #define NIMBLE_ATT_REMOVE_HIDE 1
 #define NIMBLE_ATT_REMOVE_DELETE 2
 
 #define onMtuChanged onMTUChange
 
-#include "NimBLEUtils.h"
-#include "NimBLEAddress.h"
+#include "nimble/NimBLEUtils.hpp"
+#include "nimble/NimBLEAddress.hpp"
 #if CONFIG_BT_NIMBLE_EXT_ADV
-#include "NimBLEExtAdvertising.h"
+#include "nimble/NimBLEExtAdvertising.hpp"
 #else
-#include "NimBLEAdvertising.h"
+#include "nimble/NimBLEAdvertising.hpp"
 #endif
-#include "NimBLEService.h"
-#include "NimBLEConnInfo.h"
+#include "nimble/NimBLEService.hpp"
+#include "nimble/NimBLEConnInfo.hpp"
 
 
 class NimBLEService;
