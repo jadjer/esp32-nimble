@@ -673,33 +673,6 @@ void Server::resetGATT() {
   m_gattsStarted = false;
 }
 
-#if CONFIG_BT_NIMBLE_EXT_ADV
-/**
- * @brief Start advertising.
- * @param [in] inst_id The extended advertisement instance ID to start.
- * @param [in] duration How long to advertise for in milliseconds, 0 = forever (default).
- * @param [in] max_events Maximum number of advertisement events to send, 0 = no limit (default).
- * @return True if advertising started successfully.
- * @details Start the server advertising its existence.  This is a convenience function and is equivalent to
- * retrieving the advertising object and invoking start upon it.
- */
-bool NimBLEServer::startAdvertising(uint8_t inst_id,
-                                    int duration,
-                                    int max_events) {
-  return getAdvertising()->start(inst_id, duration, max_events);
-}// startAdvertising
-
-/**
- * @brief Convenience function to stop advertising a data set.
- * @param [in] inst_id The extended advertisement instance ID to stop advertising.
- * @return True if advertising stopped successfully.
- */
-bool NimBLEServer::stopAdvertising(uint8_t inst_id) {
-  return getAdvertising()->stop(inst_id);
-}// stopAdvertising
-#endif
-
-#if !CONFIG_BT_NIMBLE_EXT_ADV || defined(_DOXYGEN_)
 /**
  * @brief Start advertising.
  * @param [in] duration The duration in milliseconds to advertise for, default = forever.
@@ -710,7 +683,6 @@ bool NimBLEServer::stopAdvertising(uint8_t inst_id) {
 bool Server::startAdvertising(uint32_t duration) {
   return getAdvertising()->start(duration);
 }// startAdvertising
-#endif
 
 /**
  * @brief Stop advertising.
@@ -740,7 +712,7 @@ uint16_t Server::getPeerMTU(uint16_t conn_id) {
 void Server::updateConnParams(uint16_t conn_handle,
                               uint16_t minInterval, uint16_t maxInterval,
                               uint16_t latency, uint16_t timeout) {
-  ble_gap_upd_params params;
+  ble_gap_upd_params params{};
 
   params.latency = latency;
   params.itvl_max = maxInterval;                      // max_int = 0x20*1.25ms = 40ms
@@ -778,8 +750,8 @@ void Server::setDataLen(uint16_t conn_handle, uint16_t tx_octets) {
 }// setDataLen
 
 bool Server::setIndicateWait(uint16_t conn_handle) {
-  for (auto i = 0; i < CONFIG_BT_NIMBLE_MAX_CONNECTIONS; i++) {
-    if (m_indWait[i] == conn_handle) {
+  for (unsigned short i : m_indWait) {
+    if (i == conn_handle) {
       return false;
     }
   }

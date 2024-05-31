@@ -16,6 +16,11 @@
 
 #include "nimble/UUID.hpp"
 
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
+
 namespace nimble {
 
 /**
@@ -38,11 +43,11 @@ private:
 public:
   Beacon();
   std::string getData();
-  uint16_t getMajor();
-  uint16_t getMinor();
-  uint16_t getManufacturerId();
+  uint16_t getMajor() const;
+  uint16_t getMinor() const;
+  uint16_t getManufacturerId() const;
   UUID getProximityUUID();
-  int8_t getSignalPower();
+  int8_t getSignalPower() const;
   void setData(const std::string &data);
   void setMajor(uint16_t major);
   void setMinor(uint16_t minor);

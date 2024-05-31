@@ -23,6 +23,11 @@
 #include "nimble/Server.hpp"
 #include "nimble/Service.hpp"
 
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
+
 namespace nimble {
 
 #define GENERIC_HID 0x03C0
@@ -40,15 +45,15 @@ namespace nimble {
  */
 class HIDDevice {
 public:
-  HIDDevice(Server *);
-  virtual ~HIDDevice();
+  explicit HIDDevice(Server *);
+  virtual ~HIDDevice() = default;
 
   void reportMap(uint8_t *map, uint16_t);
   void startServices();
 
   Service *deviceInfo();
   Service *hidService();
-  Service *batteryService();
+  [[maybe_unused]] Service *batteryService();
 
   Characteristic *manufacturer();
   void manufacturer(std::string name);

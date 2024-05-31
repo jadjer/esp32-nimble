@@ -18,6 +18,11 @@
 
 #include <string>
 
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
+
 #define EDDYSTONE_TLM_FRAME_TYPE 0x20
 
 namespace nimble {

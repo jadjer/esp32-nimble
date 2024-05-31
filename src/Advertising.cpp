@@ -39,9 +39,10 @@ Advertising::Advertising() {
  * @brief Stops the current advertising and resets the advertising data to the default values.
  */
 void Advertising::reset() {
-  if (Device::getInitialized() && isAdvertising()) {
+  if (Device::isInitialized() and isAdvertising()) {
     stop();
   }
+
   memset(&m_advData, 0, sizeof m_advData);
   memset(&m_scanData, 0, sizeof m_scanData);
   memset(&m_advParams, 0, sizeof m_advParams);
@@ -177,7 +178,7 @@ void Advertising::setServiceData(const UUID &uuid, const std::string &data) {
     m_svcData16.assign((uint8_t *) &uuid.getNative()->u16.value, (uint8_t *) &uuid.getNative()->u16.value + 2);
     m_svcData16.insert(m_svcData16.end(), data.begin(), data.end());
     m_advData.svc_data_uuid16 = (uint8_t *) &m_svcData16[0];
-    m_advData.svc_data_uuid16_len = (data.length() > 0) ? m_svcData16.size() : 0;
+    m_advData.svc_data_uuid16_len = (!data.empty()) ? m_svcData16.size() : 0;
     break;
   }
 
@@ -185,7 +186,7 @@ void Advertising::setServiceData(const UUID &uuid, const std::string &data) {
     m_svcData32.assign((uint8_t *) &uuid.getNative()->u32.value, (uint8_t *) &uuid.getNative()->u32.value + 4);
     m_svcData32.insert(m_svcData32.end(), data.begin(), data.end());
     m_advData.svc_data_uuid32 = (uint8_t *) &m_svcData32[0];
-    m_advData.svc_data_uuid32_len = (data.length() > 0) ? m_svcData32.size() : 0;
+    m_advData.svc_data_uuid32_len = (!data.empty()) ? m_svcData32.size() : 0;
     break;
   }
 
@@ -193,7 +194,7 @@ void Advertising::setServiceData(const UUID &uuid, const std::string &data) {
     m_svcData128.assign(uuid.getNative()->u128.value, uuid.getNative()->u128.value + 16);
     m_svcData128.insert(m_svcData128.end(), data.begin(), data.end());
     m_advData.svc_data_uuid128 = (uint8_t *) &m_svcData128[0];
-    m_advData.svc_data_uuid128_len = (data.length() > 0) ? m_svcData128.size() : 0;
+    m_advData.svc_data_uuid128_len = (!data.empty()) ? m_svcData128.size() : 0;
     break;
   }
 
@@ -382,7 +383,7 @@ bool Advertising::start(uint32_t duration, void (*advCompleteCB)(Advertising *pA
               m_customAdvData, m_customScanResponseData);
 
   // If Host is not synced we cannot start advertising.
-  if (!Device::m_synced) {
+  if (not Device::m_isSynced) {
     NIMBLE_LOGE(LOG_TAG, "Host reset, wait for sync.");
     return false;
   }
@@ -392,7 +393,7 @@ bool Advertising::start(uint32_t duration, void (*advCompleteCB)(Advertising *pA
   if (pServer != nullptr) {
     if (!pServer->m_gattsStarted) {
       pServer->start();
-    } else if (pServer->getConnectedCount() >= NIMBLE_MAX_CONNECTIONS) {
+    } else if (pServer->getConnectedCount() >= CONFIG_BT_NIMBLE_MAX_CONNECTIONS) {
       NIMBLE_LOGE(LOG_TAG, "Max connections reached - not advertising");
       return false;
     }

@@ -19,6 +19,11 @@
 
 #include "nimble/Descriptor.hpp"
 
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
+
 namespace nimble {
 
 struct BLE2904_Data {
@@ -40,7 +45,7 @@ struct BLE2904_Data {
  */
 class Descriptor2904 : public Descriptor {
 public:
-  Descriptor2904(Characteristic *pCharacterisitic = nullptr);
+  explicit Descriptor2904(Characteristic *pCharacterisitic = nullptr);
   static const uint8_t FORMAT_BOOLEAN = 1;
   static const uint8_t FORMAT_UINT2 = 2;
   static const uint8_t FORMAT_UINT4 = 3;

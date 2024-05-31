@@ -52,7 +52,7 @@ std::string Beacon::getData() {
  * @brief Get the major value being advertised.
  * @return The major value advertised.
  */
-uint16_t Beacon::getMajor() {
+uint16_t Beacon::getMajor() const {
   return m_beaconData.major;
 }
 
@@ -60,7 +60,7 @@ uint16_t Beacon::getMajor() {
  * @brief Get the manufacturer ID being advertised.
  * @return The manufacturer ID value advertised.
  */
-uint16_t Beacon::getManufacturerId() {
+uint16_t Beacon::getManufacturerId() const {
   return m_beaconData.manufacturerId;
 }
 
@@ -68,7 +68,7 @@ uint16_t Beacon::getManufacturerId() {
  * @brief Get the minor value being advertised.
  * @return minor value advertised.
  */
-uint16_t Beacon::getMinor() {
+uint16_t Beacon::getMinor() const {
   return m_beaconData.minor;
 }
 
@@ -77,14 +77,14 @@ uint16_t Beacon::getMinor() {
  * @return The UUID advertised.
  */
 UUID Beacon::getProximityUUID() {
-  return UUID(m_beaconData.proximityUUID, 16, true);
+  return {m_beaconData.proximityUUID, 16, true};
 }
 
 /**
  * @brief Get the signal power being advertised.
  * @return signal power level advertised.
  */
-int8_t Beacon::getSignalPower() {
+int8_t Beacon::getSignalPower() const {
   return m_beaconData.signalPower;
 }
 

@@ -15,11 +15,12 @@
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
-#include "nimble/Log.hpp"
 #include "nimble/RemoteCharacteristic.hpp"
-#include "nimble/Utils.hpp"
 
 #include <climits>
+
+#include "nimble/Log.hpp"
+#include "nimble/Utils.hpp"
 
 static const char* LOG_TAG = "NimBLERemoteCharacteristic";
 

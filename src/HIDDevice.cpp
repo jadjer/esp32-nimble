@@ -35,20 +35,20 @@ HIDDevice::HIDDevice(Server *server) {
   /*
 	 * Mandatory characteristic for device info service
 	 */
-  m_pnpCharacteristic = m_deviceInfoService->createCharacteristic((uint16_t) 0x2a50, NIMBLE_PROPERTY::READ);
+  m_pnpCharacteristic = m_deviceInfoService->createCharacteristic((uint16_t) 0x2a50, Property::READ);
 
   /*
 	 * Mandatory characteristics for HID service
 	 */
-  m_hidInfoCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4a, NIMBLE_PROPERTY::READ);
-  m_reportMapCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4b, NIMBLE_PROPERTY::READ);
-  m_hidControlCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4c, NIMBLE_PROPERTY::WRITE_NR);
-  m_protocolModeCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4e, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+  m_hidInfoCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4a, Property::READ);
+  m_reportMapCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4b, Property::READ);
+  m_hidControlCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4c, Property::WRITE_NR);
+  m_protocolModeCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4e, Property::WRITE_NR | Property::READ);
 
   /*
 	 * Mandatory battery level characteristic with notification and presence descriptor
 	 */
-  m_batteryLevelCharacteristic = m_batteryService->createCharacteristic((uint16_t) 0x2a19, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+  m_batteryLevelCharacteristic = m_batteryService->createCharacteristic((uint16_t) 0x2a19, Property::READ | Property::NOTIFY);
   Descriptor2904 *batteryLevelDescriptor = (Descriptor2904 *) m_batteryLevelCharacteristic->createDescriptor((uint16_t) 0x2904);
   batteryLevelDescriptor->setFormat(Descriptor2904::FORMAT_UINT8);
   batteryLevelDescriptor->setNamespace(1);
@@ -60,9 +60,6 @@ HIDDevice::HIDDevice(Server *server) {
 	 */
   const uint8_t pMode[] = {0x01};
   protocolMode()->setValue((uint8_t *) pMode, 1);
-}
-
-HIDDevice::~HIDDevice() {
 }
 
 /**
@@ -88,7 +85,7 @@ void HIDDevice::startServices() {
  * @brief Create a manufacturer characteristic (this characteristic is optional).
  */
 Characteristic *HIDDevice::manufacturer() {
-  m_manufacturerCharacteristic = m_deviceInfoService->createCharacteristic((uint16_t) 0x2a29, NIMBLE_PROPERTY::READ);
+  m_manufacturerCharacteristic = m_deviceInfoService->createCharacteristic((uint16_t) 0x2a29, Property::READ);
   return m_manufacturerCharacteristic;
 }
 
@@ -128,8 +125,8 @@ void HIDDevice::hidInfo(uint8_t country, uint8_t flags) {
  * @return pointer to new input report characteristic
  */
 Characteristic *HIDDevice::inputReport(uint8_t reportID) {
-  Characteristic *inputReportCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4d, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ_ENC);
-  Descriptor *inputReportDescriptor = inputReportCharacteristic->createDescriptor((uint16_t) 0x2908, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::READ_ENC);
+  Characteristic *inputReportCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4d, Property::READ | Property::NOTIFY | Property::READ_ENC);
+  Descriptor *inputReportDescriptor = inputReportCharacteristic->createDescriptor((uint16_t) 0x2908, Property::READ | Property::READ_ENC);
 
   uint8_t desc1_val[] = {reportID, 0x01};
   inputReportDescriptor->setValue((uint8_t *) desc1_val, 2);
@@ -143,8 +140,8 @@ Characteristic *HIDDevice::inputReport(uint8_t reportID) {
  * @return Pointer to new output report characteristic
  */
 Characteristic *HIDDevice::outputReport(uint8_t reportID) {
-  Characteristic *outputReportCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4d, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
-  Descriptor *outputReportDescriptor = outputReportCharacteristic->createDescriptor((uint16_t) 0x2908, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
+  Characteristic *outputReportCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4d, Property::READ | Property::WRITE | Property::WRITE_NR | Property::READ_ENC | Property::WRITE_ENC);
+  Descriptor *outputReportDescriptor = outputReportCharacteristic->createDescriptor((uint16_t) 0x2908, Property::READ | Property::WRITE | Property::READ_ENC | Property::WRITE_ENC);
 
   uint8_t desc1_val[] = {reportID, 0x02};
   outputReportDescriptor->setValue((uint8_t *) desc1_val, 2);
@@ -158,8 +155,8 @@ Characteristic *HIDDevice::outputReport(uint8_t reportID) {
  * @return Pointer to new feature report characteristic
  */
 Characteristic *HIDDevice::featureReport(uint8_t reportID) {
-  Characteristic *featureReportCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4d, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
-  Descriptor *featureReportDescriptor = featureReportCharacteristic->createDescriptor((uint16_t) 0x2908, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
+  Characteristic *featureReportCharacteristic = m_hidService->createCharacteristic((uint16_t) 0x2a4d, Property::READ | Property::WRITE | Property::READ_ENC | Property::WRITE_ENC);
+  Descriptor *featureReportDescriptor = featureReportCharacteristic->createDescriptor((uint16_t) 0x2908, Property::READ | Property::WRITE | Property::READ_ENC | Property::WRITE_ENC);
 
   uint8_t desc1_val[] = {reportID, 0x03};
   featureReportDescriptor->setValue((uint8_t *) desc1_val, 2);
@@ -171,14 +168,14 @@ Characteristic *HIDDevice::featureReport(uint8_t reportID) {
  * @brief Creates a keyboard boot input report characteristic
  */
 Characteristic *HIDDevice::bootInput() {
-  return m_hidService->createCharacteristic((uint16_t) 0x2a22, NIMBLE_PROPERTY::NOTIFY);
+  return m_hidService->createCharacteristic((uint16_t) 0x2a22, Property::NOTIFY);
 }
 
 /**
  * @brief Create a keyboard boot output report characteristic
  */
 Characteristic *HIDDevice::bootOutput() {
-  return m_hidService->createCharacteristic((uint16_t) 0x2a32, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR);
+  return m_hidService->createCharacteristic(static_cast<uint16_t>(0x2a32), Property::READ | Property::WRITE | Property::WRITE_NR);
 }
 
 /**
@@ -243,10 +240,10 @@ Service *HIDDevice::hidService() {
 /**
  * @brief @brief Returns a pointer to the battery service.
  */
-Service *HIDDevice::batteryService() {
+[[maybe_unused]] Service *HIDDevice::batteryService() {
   return m_batteryService;
 }
 
-}
+}// namespace nimble
 
 #endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */

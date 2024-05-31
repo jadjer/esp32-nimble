@@ -15,22 +15,14 @@
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
-#include "nimble/Client.hpp"
-#include "nimble/Device.hpp"
-#include "nimble/Log.hpp"
-
 #include <string>
 #include <unordered_set>
 #include <climits>
+#include <nimble/nimble_port.h>
 
-#if defined(CONFIG_NIMBLE_CPP_IDF)
-#include "nimble/nimble_port.h"
-#else
-#include "nimble/porting/nimble/include/nimble/nimble_port.h"
-#endif
-
-static const char* LOG_TAG = "NimBLEClient";
-static NimBLEClientCallbacks defaultCallbacks;
+#include "nimble/Client.hpp"
+#include "nimble/Device.hpp"
+#include "nimble/Log.hpp"
 
 /*
  * Design
@@ -55,6 +47,9 @@ static NimBLEClientCallbacks defaultCallbacks;
 
 namespace nimble {
 
+static const char* LOG_TAG = "NimBLEClient";
+static ClientCallbacks defaultCallbacks;
+
 /**
  * @brief Constructor, private - only callable by NimBLEDevice::createClient
  * to ensure proper handling of the list of client objects.
@@ -67,9 +62,6 @@ Client::Client(const Address &peerAddress) : m_peerAddress(peerAddress) {
   m_pTaskData = nullptr;
   m_connEstablished = false;
   m_lastErr = 0;
-#if CONFIG_BT_NIMBLE_EXT_ADV
-  m_phyMask = BLE_GAP_LE_PHY_1M_MASK | BLE_GAP_LE_PHY_2M_MASK | BLE_GAP_LE_PHY_CODED_MASK;
-#endif
 
   m_pConnParams.scan_itvl = 16;                                           // Scan interval in 0.625ms units (NimBLE Default)
   m_pConnParams.scan_window = 16;                                         // Scan window in 0.625ms units (NimBLE Default)
@@ -81,8 +73,7 @@ Client::Client(const Address &peerAddress) : m_peerAddress(peerAddress) {
   m_pConnParams.max_ce_len = BLE_GAP_INITIAL_CONN_MAX_CE_LEN;             // Maximum length of connection event in 0.625ms units
 
   memset(&m_dcTimer, 0, sizeof(m_dcTimer));
-  ble_npl_callout_init(&m_dcTimer, nimble_port_get_dflt_eventq(),
-                       Client::dcTimerCb, this);
+  ble_npl_callout_init(&m_dcTimer, nimble_port_get_dflt_eventq(), Client::dcTimerCb, this);
 }// NimBLEClient
 
 /**
@@ -182,14 +173,13 @@ bool Client::connect(AdvertisedDevice *device, bool deleteAttributes) {
 bool Client::connect(const Address &address, bool deleteAttributes) {
   NIMBLE_LOGD(LOG_TAG, ">> connect(%s)", address.toString().c_str());
 
-  if (!Device::m_synced) {
+  if (not Device::m_isSynced) {
     NIMBLE_LOGC(LOG_TAG, "Host reset, wait for sync.");
     return false;
   }
 
   if (isConnected() || m_connEstablished || m_pTaskData != nullptr) {
-    NIMBLE_LOGE(LOG_TAG, "Client busy, connected to %s, id=%d",
-                std::string(m_peerAddress).c_str(), getConnId());
+    NIMBLE_LOGE(LOG_TAG, "Client busy, connected to %s, id=%d", std::string(m_peerAddress).c_str(), getConnId());
     return false;
   }
 
@@ -197,8 +187,7 @@ bool Client::connect(const Address &address, bool deleteAttributes) {
   memcpy(&peerAddr_t.val, address.getNative(), 6);
   peerAddr_t.type = address.getType();
   if (ble_gap_conn_find_by_addr(&peerAddr_t, nullptr) == 0) {
-    NIMBLE_LOGE(LOG_TAG, "A connection to %s already exists",
-                address.toString().c_str());
+    NIMBLE_LOGE(LOG_TAG, "A connection to %s already exists",address.toString().c_str());
     return false;
   }
 
@@ -219,29 +208,16 @@ bool Client::connect(const Address &address, bool deleteAttributes) {
      *  Loop on BLE_HS_EBUSY if the scan hasn't stopped yet.
      */
   do {
-#if CONFIG_BT_NIMBLE_EXT_ADV
-    rc = ble_gap_ext_connect(NimBLEDevice::m_own_addr_type,
-                             &peerAddr_t,
-                             m_connectTimeout,
-                             m_phyMask,
-                             &m_pConnParams,
-                             &m_pConnParams,
-                             &m_pConnParams,
-                             NimBLEClient::handleGapEvent,
-                             this);
-
-#else
     rc = ble_gap_connect(Device::m_own_addr_type, &peerAddr_t,
                          m_connectTimeout, &m_pConnParams,
                          Client::handleGapEvent, this);
-#endif
     switch (rc) {
     case 0:
       break;
 
     case BLE_HS_EBUSY:
       // Scan was still running, stop it and try again
-      if (!NimBLEDevice::getScan()->stop()) {
+      if (not Device::getScan()->stop()) {
         rc = BLE_HS_EUNKNOWN;
       }
       break;
@@ -1090,7 +1066,7 @@ int Client::handleGapEvent(struct ble_gap_event *event, void *arg) {
   }// BLE_GAP_EVENT_MTU
 
   case BLE_GAP_EVENT_PASSKEY_ACTION: {
-    struct ble_sm_io pkey = {0, 0};
+    struct ble_sm_io pkey = {0, {0}};
     (void) pkey;//warning: variable 'pkey' set but not used [-Wunused-but-set-variable]
 
     if (pClient->m_conn_id != event->passkey.conn_handle)

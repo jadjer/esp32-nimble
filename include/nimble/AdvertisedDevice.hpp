@@ -27,6 +27,11 @@
 #include <map>
 #include <vector>
 
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
+
 namespace nimble {
 
 class Scan;

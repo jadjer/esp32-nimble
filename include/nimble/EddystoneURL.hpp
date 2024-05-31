@@ -18,6 +18,11 @@
 
 #include <string>
 
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
+
 #define EDDYSTONE_URL_FRAME_TYPE 0x10
 
 namespace nimble {

@@ -35,7 +35,6 @@ idf_component_register(
     "src/Device.cpp"
     "src/EddystoneTLM.cpp"
     "src/EddystoneURL.cpp"
-    "src/ExtendedAdvertising.cpp"
     "src/HIDDevice.cpp"
     "src/RemoteCharacteristic.cpp"
     "src/RemoteDescriptor.cpp"

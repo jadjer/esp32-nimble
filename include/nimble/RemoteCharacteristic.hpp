@@ -17,12 +17,18 @@
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
-#include "nimble/RemoteDescriptor.hpp"
-#include "nimble/RemoteService.hpp"
-
-#include "nimble/Log.hpp"
 #include <functional>
 #include <vector>
+#include <host/ble_gatt.h>
+
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
+
+#include "nimble/RemoteDescriptor.hpp"
+#include "nimble/RemoteService.hpp"
+#include "nimble/Log.hpp"
 
 namespace nimble {
 

@@ -19,12 +19,12 @@
 
 #include "host/ble_gap.h"
 
+#include <string>
+
 /****  FIX COMPILATION ****/
 #undef min
 #undef max
 /**************************/
-
-#include <string>
 
 namespace nimble {
 

@@ -17,7 +17,9 @@
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
+#include "nimble/AttributeValue.hpp"
 #include "nimble/RemoteCharacteristic.hpp"
+#include "nimble/UUID.hpp"
 
 namespace nimble {
 
@@ -26,12 +28,14 @@ class RemoteCharacteristic;
  * @brief A model of remote %BLE descriptor.
  */
 class RemoteDescriptor {
+  friend class RemoteCharacteristic;
+
 public:
   uint16_t getHandle();
   RemoteCharacteristic *getRemoteCharacteristic();
   UUID getUUID();
   AttributeValue readValue();
-  std::string toString(void);
+  std::string toString();
   bool writeValue(const uint8_t *data, size_t length, bool response = false);
   bool writeValue(const std::vector<uint8_t> &v, bool response = false);
   bool writeValue(const char *s, bool response = false);
@@ -45,11 +49,7 @@ public:
      * @details Only used for non-arrays and types without a `c_str()` method.
      */
   template<typename T>
-#ifdef _DOXYGEN_
-  bool
-#else
   typename std::enable_if<!std::is_array<T>::value && !Has_c_str_len<T>::value, bool>::type
-#endif
   writeValue(const T &s, bool response = false) {
     return writeValue((uint8_t *) &s, sizeof(T), response);
   }
@@ -61,11 +61,7 @@ public:
      * @details Only used if the <type\> has a `c_str()` method.
      */
   template<typename T>
-#ifdef _DOXYGEN_
-  bool
-#else
   typename std::enable_if<Has_c_str_len<T>::value, bool>::type
-#endif
   writeValue(const T &s, bool response = false) {
     return writeValue((uint8_t *) s.c_str(), s.length(), response);
   }
@@ -81,26 +77,23 @@ public:
   template<typename T>
   T readValue(bool skipSizeCheck = false) {
     AttributeValue value = readValue();
-    if (!skipSizeCheck && value.size() < sizeof(T))
+    if (!skipSizeCheck && value.size() < sizeof(T)) {
       return T();
+    }
     return *((T *) value.data());
   }
 
 private:
-  friend class RemoteCharacteristic;
+  RemoteDescriptor(RemoteCharacteristic *pRemoteCharacteristic, const struct ble_gatt_dsc *dsc);
+  static int onWriteCB(uint16_t conn_handle, const struct ble_gatt_error *error, struct ble_gatt_attr *attr, void *arg);
+  static int onReadCB(uint16_t conn_handle, const struct ble_gatt_error *error, struct ble_gatt_attr *attr, void *arg);
 
-  RemoteDescriptor(RemoteCharacteristic *pRemoteCharacteristic,
-                   const struct ble_gatt_dsc *dsc);
-  static int onWriteCB(uint16_t conn_handle, const struct ble_gatt_error *error,
-                       struct ble_gatt_attr *attr, void *arg);
-  static int onReadCB(uint16_t conn_handle, const struct ble_gatt_error *error,
-                      struct ble_gatt_attr *attr, void *arg);
-
+private:
   uint16_t m_handle;
   UUID m_uuid;
   RemoteCharacteristic *m_pRemoteCharacteristic;
 };
 
-}
+}// namespace nimble
 
 #endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */

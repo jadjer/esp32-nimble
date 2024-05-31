@@ -24,12 +24,17 @@
 
 #include <vector>
 
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
+
 namespace nimble {
 
-class NimBLEDevice;
+class Device;
 class Scan;
 class AdvertisedDevice;
-class NimBLEScanCallbacks;
+class ScanCallbacks;
 class Address;
 
 /**
@@ -39,17 +44,18 @@ class Address;
  * getCount().  We can retrieve a device by calling getDevice() passing in the
  * index (starting at 0) of the desired device.
  */
-class NimBLEScanResults {
+class ScanResults {
+  friend class Scan;
+
 public:
   void dump();
-  int getCount();
+  std::size_t getCount();
   AdvertisedDevice getDevice(uint32_t i);
   std::vector<AdvertisedDevice *>::iterator begin();
   std::vector<AdvertisedDevice *>::iterator end();
   AdvertisedDevice *getDevice(const Address &address);
 
 private:
-  friend Scan;
   std::vector<AdvertisedDevice *> m_advertisedDevicesVector;
 };
 
@@ -59,10 +65,12 @@ private:
  * Scanning is associated with a %BLE client that is attempting to locate BLE servers.
  */
 class Scan {
+  friend class Device;
+
 public:
   bool start(uint32_t duration, bool is_continue = false);
   bool isScanning();
-  void setScanCallbacks(NimBLEScanCallbacks *pScanCallbacks, bool wantDuplicates = false);
+  void setScanCallbacks(ScanCallbacks *pScanCallbacks, bool wantDuplicates = false);
   void setActiveScan(bool active);
   void setInterval(uint16_t intervalMSecs);
   void setWindow(uint16_t windowMSecs);
@@ -72,24 +80,25 @@ public:
   void clearDuplicateCache();
   bool stop();
   void clearResults();
-  NimBLEScanResults getResults();
-  NimBLEScanResults getResults(uint32_t duration, bool is_continue = false);
+  ScanResults getResults();
+  ScanResults getResults(uint32_t duration, bool is_continue = false);
   void setMaxResults(uint8_t maxResults);
   void erase(const Address &address);
 
 private:
-  friend class NimBLEDevice;
-
   Scan();
   ~Scan();
+
+private:
   static int handleGapEvent(ble_gap_event *event, void *arg);
   void onHostReset();
   void onHostSync();
 
-  NimBLEScanCallbacks *m_pScanCallbacks;
-  ble_gap_disc_params m_scan_params;
+private:
+  ScanCallbacks *m_pScanCallbacks;
+  ble_gap_disc_params m_scan_params{};
   bool m_ignoreResults;
-  NimBLEScanResults m_scanResults;
+  ScanResults m_scanResults;
   uint32_t m_duration;
   ble_task_data_t *m_pTaskData;
   uint8_t m_maxResults;
@@ -98,9 +107,9 @@ private:
 /**
  * @brief A callback handler for callbacks associated device scanning.
  */
-class NimBLEScanCallbacks {
+class ScanCallbacks {
 public:
-  virtual ~NimBLEScanCallbacks() {}
+  virtual ~ScanCallbacks() = default;
 
   /**
      * @brief Called when a new device is discovered, before the scan result is received (if applicable).
@@ -118,9 +127,9 @@ public:
      * @brief Called when a scan operation ends.
      * @param [in] scanResults The results of the scan that ended.
      */
-  virtual void onScanEnd(NimBLEScanResults scanResults) {};
+  virtual void onScanEnd(ScanResults const &scanResults) {};
 };
 
-}
+}// namespace nimble
 
 #endif /* CONFIG_BT_ENABLED CONFIG_BT_NIMBLE_ROLE_OBSERVER */

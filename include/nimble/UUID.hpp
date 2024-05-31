@@ -20,6 +20,11 @@
 #include <string>
 #include <host/ble_uuid.h>
 
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
+
 namespace nimble {
 
 /**

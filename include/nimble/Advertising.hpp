@@ -15,21 +15,19 @@
 #pragma once
 
 #include "sdkconfig.h"
-#if (defined(CONFIG_BT_NIMBLE_ENABLED) && \
-    defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER) && \
-    !CONFIG_BT_NIMBLE_EXT_ADV)
+#if (defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER) && !CONFIG_BT_NIMBLE_EXT_ADV)
 
 #include "host/ble_gap.h"
-
-/****  FIX COMPILATION ****/
-#undef min
-#undef max
-/**************************/
 
 #include "nimble/Address.hpp"
 #include "nimble/UUID.hpp"
 
 #include <vector>
+
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
 
 namespace nimble {
 
@@ -46,6 +44,8 @@ namespace nimble {
  * @brief Advertisement data set by the programmer to be published by the %BLE server.
  */
 class AdvertisementData {
+  friend class Advertising;
+
   // Only a subset of the possible BLE architected advertisement fields are currently exposed.  Others will
   // be exposed on demand/request or as time permits.
   //
@@ -71,9 +71,9 @@ public:
   std::string getPayload();// Retrieve the current advert payload.
 
 private:
-  friend class Advertising;
-  void setServices(const bool complete, const uint8_t size,
-                   const std::vector<UUID> &v_uuid);
+  void setServices(bool complete, uint8_t size, std::vector<UUID> const &v_uuid);
+
+private:
   std::string m_payload;// The payload of the advertisement.
 };// NimBLEAdvertisementData
 
@@ -83,8 +83,13 @@ private:
  * A %BLE server will want to perform advertising in order to make itself known to %BLE clients.
  */
 class Advertising {
+  friend class Device;
+  friend class Server;
+
 public:
   Advertising();
+
+public:
   void addServiceUUID(const UUID &serviceUUID);
   void addServiceUUID(const char *serviceUUID);
   void removeServiceUUID(const UUID &serviceUUID);
@@ -111,9 +116,6 @@ public:
   bool isAdvertising();
 
 private:
-  friend class NimBLEDevice;
-  friend class Server;
-
   void onHostSync();
   static int handleGapEvent(struct ble_gap_event *event, void *arg);
 
@@ -136,6 +138,6 @@ private:
   std::vector<uint8_t> m_uri;
 };
 
-}
+}// namespace nimble
 
 #endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER  && !CONFIG_BT_NIMBLE_EXT_ADV */

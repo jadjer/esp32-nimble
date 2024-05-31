@@ -37,19 +37,22 @@ namespace nimble {
 class Address {
 public:
   Address();
-  Address(ble_addr_t address);
-  Address(uint8_t address[6], uint8_t type = BLE_ADDR_PUBLIC);
-  Address(const std::string &stringAddress, uint8_t type = BLE_ADDR_PUBLIC);
-  Address(const uint64_t &address, uint8_t type = BLE_ADDR_PUBLIC);
-  bool equals(const Address &otherAddress) const;
-  const uint8_t *getNative() const;
-  std::string toString() const;
-  uint8_t getType() const;
+  explicit Address(ble_addr_t address);
+  explicit Address(uint8_t address[6], uint8_t type = BLE_ADDR_PUBLIC);
+  explicit Address(const std::string &stringAddress, uint8_t type = BLE_ADDR_PUBLIC);
+  explicit Address(const uint64_t &address, uint8_t type = BLE_ADDR_PUBLIC);
 
+public:
+  [[nodiscard]] bool equals(const Address &otherAddress) const;
+  [[nodiscard]] const uint8_t *getNative() const;
+  [[nodiscard]] std::string toString() const;
+  [[nodiscard]] uint8_t getType() const;
+
+public:
   bool operator==(const Address &rhs) const;
   bool operator!=(const Address &rhs) const;
-  operator std::string() const;
-  operator uint64_t() const;
+  explicit operator std::string() const;
+  explicit operator uint64_t() const;
 
 private:
   uint8_t m_address[6];

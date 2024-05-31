@@ -15,8 +15,8 @@
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
-#include "nimble/2904.hpp"
 #include "nimble/Characteristic.hpp"
+#include "nimble/Descriptor2904.hpp"
 #include "nimble/Device.hpp"
 #include "nimble/Log.hpp"
 
@@ -36,7 +36,7 @@ static const char *LOG_TAG = "NimBLECharacteristic";
  * @param [in] max_len - The maximum length in bytes that the characteristic value can hold. (Default: 512 bytes for esp32, 20 for all others).
  * @param [in] pService - pointer to the service instance this characteristic belongs to.
  */
-Characteristic::Characteristic(const char *uuid, uint16_t properties, uint16_t max_len, Service *pService) : Characteristic(UUID(uuid), properties, max_len, pService) {
+Characteristic::Characteristic(const char *uuid, uint16_t properties, uint16_t maxLen, Service *pService) : Characteristic(UUID(uuid), properties, maxLen, pService) {
 }
 
 /**
@@ -46,7 +46,7 @@ Characteristic::Characteristic(const char *uuid, uint16_t properties, uint16_t m
  * @param [in] max_len - The maximum length in bytes that the characteristic value can hold. (Default: 512 bytes for esp32, 20 for all others).
  * @param [in] pService - pointer to the service instance this characteristic belongs to.
  */
-Characteristic::Characteristic(const UUID &uuid, uint16_t properties, uint16_t max_len, Service *pService) : m_value(std::min(CONFIG_NIMBLE_CPP_ATT_VALUE_INIT_LENGTH, (int) max_len), max_len) {
+Characteristic::Characteristic(const UUID &uuid, uint16_t properties, uint16_t maxLen, Service *pService) : m_value(std::min(CONFIG_NIMBLE_CPP_ATT_VALUE_INIT_LENGTH, (int) maxLen), maxLen) {
   m_uuid = uuid;
   m_handle = NULL_HANDLE;
   m_properties = properties;
@@ -54,6 +54,9 @@ Characteristic::Characteristic(const UUID &uuid, uint16_t properties, uint16_t m
   m_pService = pService;
   m_removed = 0;
 }// NimBLECharacteristic
+
+Characteristic::Characteristic(uint16_t uuid, uint16_t properties, uint16_t maxLen, Service *pService) : Characteristic(UUID(uuid), properties, maxLen, pService) {
+}
 
 /**
  * @brief Destructor.
@@ -72,7 +75,7 @@ Characteristic::~Characteristic() {
  * @return The new BLE descriptor.
  */
 Descriptor *Characteristic::createDescriptor(const char *uuid, uint32_t properties, uint16_t max_len) {
-  return createDescriptor(NimBLEUUID(uuid), properties, max_len);
+  return createDescriptor(UUID(uuid), properties, max_len);
 }
 
 /**
@@ -87,7 +90,7 @@ Descriptor *Characteristic::createDescriptor(const UUID &uuid, uint32_t properti
   if (uuid == UUID(uint16_t(0x2902))) {
     assert(0 && "0x2902 descriptors cannot be manually created");
   } else if (uuid == UUID(uint16_t(0x2904))) {
-    pDescriptor = new NimBLE2904(this);
+    pDescriptor = new Descriptor2904(this);
   } else {
     pDescriptor = new Descriptor(uuid, properties, max_len, this);
   }
@@ -95,6 +98,10 @@ Descriptor *Characteristic::createDescriptor(const UUID &uuid, uint32_t properti
   addDescriptor(pDescriptor);
   return pDescriptor;
 }// createDescriptor
+
+Descriptor *Characteristic::createDescriptor(uint16_t uuid, uint32_t properties, uint16_t max_len) {
+ return createDescriptor(UUID(uuid), properties, max_len);
+}
 
 /**
  * @brief Add a descriptor to the characteristic.
@@ -117,7 +124,7 @@ void Characteristic::addDescriptor(Descriptor *pDescriptor) {
   }
 
   pDescriptor->setCharacteristic(this);
-  NimBLEDevice::getServer()->serviceChanged();
+  Device::getServer()->serviceChanged();
 }
 
 /**
@@ -144,7 +151,7 @@ void Characteristic::removeDescriptor(Descriptor *pDescriptor, bool deleteDsc) {
   }
 
   pDescriptor->m_removed = deleteDsc ? NIMBLE_ATT_REMOVE_DELETE : NIMBLE_ATT_REMOVE_HIDE;
-  NimBLEDevice::getServer()->serviceChanged();
+  Device::getServer()->serviceChanged();
 }// removeDescriptor
 
 /**
@@ -153,7 +160,7 @@ void Characteristic::removeDescriptor(Descriptor *pDescriptor, bool deleteDsc) {
  * @return A pointer to the descriptor object or nullptr if not found.
  */
 Descriptor *Characteristic::getDescriptorByUUID(const char *uuid) {
-  return getDescriptorByUUID(NimBLEUUID(uuid));
+  return getDescriptorByUUID(UUID(uuid));
 }// getDescriptorByUUID
 
 /**
@@ -223,7 +230,7 @@ UUID Characteristic::getUUID() {
  * @brief Retrieve the current value of the characteristic.
  * @return The NimBLEAttValue containing the current characteristic value.
  */
-AttValue Characteristic::getValue(time_t *timestamp) {
+AttributeValue Characteristic::getValue(time_t *timestamp) {
   if (timestamp != nullptr) {
     m_value.getValue(timestamp);
   }
@@ -331,10 +338,10 @@ void Characteristic::setSubscribe(struct ble_gap_event *event) {
   }
 
   uint16_t subVal = 0;
-  if (event->subscribe.cur_notify > 0 && (m_properties & NIMBLE_PROPERTY::NOTIFY)) {
+  if (event->subscribe.cur_notify > 0 && (m_properties & Property ::NOTIFY)) {
     subVal |= NIMBLE_SUB_NOTIFY;
   }
-  if (event->subscribe.cur_indicate && (m_properties & NIMBLE_PROPERTY::INDICATE)) {
+  if (event->subscribe.cur_indicate && (m_properties & Property::INDICATE)) {
     subVal |= NIMBLE_SUB_INDICATE;
   }
 
@@ -353,7 +360,7 @@ void Characteristic::setSubscribe(struct ble_gap_event *event) {
 
   if (subVal > 0) {
     if (it == m_subscribedVec.end()) {
-      m_subscribedVec.push_back({event->subscribe.conn_handle, subVal});
+      m_subscribedVec.emplace_back(event->subscribe.conn_handle, subVal);
     } else {
       (*it).second = subVal;
     }
@@ -417,13 +424,13 @@ void Characteristic::notify(const std::vector<uint8_t> &value, bool is_notificat
 void Characteristic::notify(const uint8_t *value, size_t length, bool is_notification, uint16_t conn_handle) {
   NIMBLE_LOGD(LOG_TAG, ">> notify: length: %d", length);
 
-  if (!(m_properties & NIMBLE_PROPERTY::NOTIFY) && !(m_properties & NIMBLE_PROPERTY::INDICATE)) {
+  if (!(m_properties & Property ::NOTIFY) && !(m_properties & Property::INDICATE)) {
     NIMBLE_LOGE(LOG_TAG,
                 "<< notify-Error; Notify/indicate not enabled for characteristic: %s",
                 std::string(getUUID()).c_str());
   }
 
-  if (m_subscribedVec.size() == 0) {
+  if (m_subscribedVec.empty()) {
     NIMBLE_LOGD(LOG_TAG, "<< notify: No clients subscribed.");
     return;
   }
@@ -476,7 +483,7 @@ void Characteristic::notify(const uint8_t *value, size_t length, bool is_notific
     // We also must create it in each loop iteration because it is consumed with each host call.
     os_mbuf *om = ble_hs_mbuf_from_flat(value, length);
 
-    if (!is_notification && (m_properties & NIMBLE_PROPERTY::INDICATE)) {
+    if (!is_notification && (m_properties & Property::INDICATE)) {
       if (!Device::getServer()->setIndicateWait(it.first)) {
         NIMBLE_LOGE(LOG_TAG, "prior Indication in progress");
         os_mbuf_free_chain(om);
@@ -563,7 +570,9 @@ std::string Characteristic::toString() {
   if (m_properties & BLE_GATT_CHR_PROP_INDICATE)
     res += "Indicate ";
   return res;
-}// toString
+}
+
+// toString
 
 /**
  * @brief Callback function to support a read request.

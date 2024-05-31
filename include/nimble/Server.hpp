@@ -22,17 +22,19 @@
 
 #include "nimble/Address.hpp"
 #include "nimble/Utils.hpp"
-#if CONFIG_BT_NIMBLE_EXT_ADV
-#include "nimble/NimBLEExtAdvertising.hpp"
-#else
 #include "nimble/Advertising.hpp"
-#endif
 #include "nimble/ConnectionInfo.hpp"
 #include "nimble/Service.hpp"
 #include "nimble/UUID.hpp"
 
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
+
 namespace nimble {
 
+class Device;
 class Service;
 class Characteristic;
 class ServerCallbacks;
@@ -41,6 +43,12 @@ class ServerCallbacks;
  * @brief The model of a %BLE server.
  */
 class Server {
+  friend class Device;
+  friend class Characteristic;
+  friend class Service;
+  friend class Device;
+  friend class Advertising;
+
 public:
   size_t getConnectedCount();
   Service *createService(const char *uuid);
@@ -48,53 +56,33 @@ public:
   void removeService(Service *service, bool deleteSvc = false);
   void addService(Service *service);
   void setCallbacks(ServerCallbacks *pCallbacks, bool deleteCallbacks = true);
-#if CONFIG_BT_NIMBLE_EXT_ADV
-  NimBLEExtAdvertising *getAdvertising();
-  bool startAdvertising(uint8_t inst_id,
-                        int duration = 0,
-                        int max_events = 0);
-  bool stopAdvertising(uint8_t inst_id);
-#endif
-#if !CONFIG_BT_NIMBLE_EXT_ADV || defined(_DOXYGEN_)
+
   Advertising *getAdvertising();
   bool startAdvertising(uint32_t duration = 0);
-#endif
   bool stopAdvertising();
+
   void start();
+
   Service *getServiceByUUID(const char *uuid, uint16_t instanceId = 0);
   Service *getServiceByUUID(const UUID &uuid, uint16_t instanceId = 0);
   Service *getServiceByHandle(uint16_t handle);
-  int disconnect(uint16_t connID,
-                 uint8_t reason = BLE_ERR_REM_USER_CONN_TERM);
-  void updateConnParams(uint16_t conn_handle,
-                        uint16_t minInterval, uint16_t maxInterval,
-                        uint16_t latency, uint16_t timeout);
+  int disconnect(uint16_t connID, uint8_t reason = BLE_ERR_REM_USER_CONN_TERM);
+  void updateConnParams(uint16_t conn_handle, uint16_t minInterval, uint16_t maxInterval, uint16_t latency, uint16_t timeout);
   void setDataLen(uint16_t conn_handle, uint16_t tx_octets);
   uint16_t getPeerMTU(uint16_t conn_id);
   std::vector<uint16_t> getPeerDevices();
   ConnectionInfo getPeerInfo(size_t index);
   ConnectionInfo getPeerInfo(const Address &address);
   ConnectionInfo getPeerIDInfo(uint16_t id);
-#if !CONFIG_BT_NIMBLE_EXT_ADV || defined(_DOXYGEN_)
+
   void advertiseOnDisconnect(bool);
-#endif
 
 private:
   Server();
   ~Server();
-  friend class Characteristic;
-  friend class Service;
-  friend class NimBLEDevice;
-  friend class Advertising;
-#if CONFIG_BT_NIMBLE_EXT_ADV
-  friend class NimBLEExtAdvertising;
-  friend class NimBLEExtAdvertisementData;
-#endif
 
   bool m_gattsStarted;
-#if !CONFIG_BT_NIMBLE_EXT_ADV
   bool m_advertiseOnDisconnect;
-#endif
   bool m_svcChanged;
   ServerCallbacks *m_pServerCallbacks;
   bool m_deleteCallbacks;
@@ -168,6 +156,6 @@ public:
   virtual bool onConfirmPIN(uint32_t pin);
 };// NimBLEServerCallbacks
 
-}
+}// namespace nimble
 
 #endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */

@@ -17,16 +17,14 @@
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
+#include <string>
+
 #include "nimble/AttributeValue.hpp"
-#include "nimble/Characteristic.hpp"
 #include "nimble/ConnectionInfo.hpp"
 #include "nimble/UUID.hpp"
 
-#include <string>
-
 namespace nimble {
 
-class Service;
 class Characteristic;
 class DescriptorCallbacks;
 
@@ -34,10 +32,12 @@ class DescriptorCallbacks;
  * @brief A model of a %BLE descriptor.
  */
 class Descriptor {
-public:
-  Descriptor(const char *uuid, uint16_t properties,uint16_t max_len,Characteristic *pCharacteristic = nullptr);
+  friend class Characteristic;
 
-  Descriptor(UUID uuid, uint16_t properties,uint16_t max_len,Characteristic *pCharacteristic = nullptr);
+public:
+  Descriptor(const char *uuid, uint16_t properties, uint16_t max_len, Characteristic *pCharacteristic = nullptr);
+
+  Descriptor(UUID uuid, uint16_t properties, uint16_t max_len, Characteristic *pCharacteristic = nullptr);
 
   ~Descriptor();
 
@@ -78,15 +78,11 @@ public:
   }
 
 private:
-  friend class Characteristic;
-  friend class Service;
-  friend class NimBLE2904;
-
-  static int handleGapEvent(uint16_t conn_handle, uint16_t attr_handle,
-                            struct ble_gatt_access_ctxt *ctxt, void *arg);
+  static int handleGapEvent(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg);
   void setHandle(uint16_t handle);
   void setCharacteristic(Characteristic *pChar);
 
+private:
   UUID m_uuid;
   uint16_t m_handle;
   DescriptorCallbacks *m_pCallbacks;
@@ -110,8 +106,6 @@ public:
   virtual void onWrite(Descriptor *pDescriptor, ConnectionInfo &connInfo);
 };
 
-#include "nimble/Descriptor2904.hpp"
-
-}
+}// namespace nimble
 
 #endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */

@@ -25,8 +25,13 @@
 #include "nimble/UUID.hpp"
 #include "nimble/Utils.hpp"
 
-#include <vector>
 #include <string>
+#include <vector>
+
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
 
 namespace nimble {
 
@@ -39,6 +44,10 @@ class AdvertisedDevice;
  * @brief A model of a %BLE client.
  */
 class Client {
+  friend class Device;
+  friend class RemoteService;
+  friend class ClientCallbacks;
+
 public:
   bool connect(AdvertisedDevice *device, bool deleteAttributes = true);
   bool connect(const Address &address, bool deleteAttributes = true);
@@ -57,10 +66,9 @@ public:
   AttributeValue getValue(const UUID &serviceUUID, const UUID &characteristicUUID);
   bool setValue(const UUID &serviceUUID, const UUID &characteristicUUID,
                 const AttributeValue &value, bool response = false);
-  RemoteCharacteristic *getCharacteristic(const uint16_t handle);
+  RemoteCharacteristic *getCharacteristic(uint16_t handle);
   bool isConnected();
-  void setClientCallbacks(ClientCallbacks *pClientCallbacks,
-                          bool deleteCallbacks = true);
+  void setClientCallbacks(ClientCallbacks *pClientCallbacks, bool deleteCallbacks = true);
   std::string toString();
   uint16_t getConnId();
   uint16_t getMTU();
@@ -75,17 +83,12 @@ public:
   bool discoverAttributes();
   ConnectionInfo getConnInfo();
   int getLastError();
-#if CONFIG_BT_NIMBLE_EXT_ADV
-  void setConnectPhy(uint8_t mask);
-#endif
 
 private:
-  Client(const Address &peerAddress);
+  explicit Client(Address const &peerAddress);
   ~Client();
 
-  friend class NimBLEDevice;
-  friend class RemoteService;
-
+private:
   static int handleGapEvent(struct ble_gap_event *event, void *arg);
   static int serviceDiscoveredCB(uint16_t conn_handle,
                                  const struct ble_gatt_error *error,
@@ -94,6 +97,7 @@ private:
   static void dcTimerCb(ble_npl_event *event);
   bool retrieveServices(const UUID *uuid_filter = nullptr);
 
+private:
   Address m_peerAddress;
   int m_lastErr;
   uint16_t m_conn_id;
@@ -103,14 +107,10 @@ private:
   ClientCallbacks *m_pClientCallbacks;
   ble_task_data_t *m_pTaskData;
   ble_npl_callout m_dcTimer;
-#if CONFIG_BT_NIMBLE_EXT_ADV
-  uint8_t m_phyMask;
-#endif
 
   std::vector<RemoteService *> m_servicesVector;
 
 private:
-  friend class ClientCallbacks;
   ble_gap_conn_params m_pConnParams;
 
 };// class NimBLEClient
@@ -164,6 +164,6 @@ public:
   virtual bool onConfirmPIN(uint32_t pin);
 };
 
-}
+}// namespace nimble
 
 #endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */

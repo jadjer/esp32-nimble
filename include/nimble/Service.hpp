@@ -17,15 +17,22 @@
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
+#include <vector>
+
 #include "nimble/Characteristic.hpp"
-#include "nimble/Server.hpp"
 #include "nimble/UUID.hpp"
+
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
 
 namespace nimble {
 
 class Server;
-class Characteristic;
 
+using CharacteristicPtr = Characteristic *;
+using Characteristics = std::vector<CharacteristicPtr>;
 
 /**
  * @brief The model of a %BLE service.
@@ -33,55 +40,47 @@ class Characteristic;
  */
 class Service {
 public:
-  Service(const char* uuid);
-  Service(const UUID &uuid);
-    ~Service();
+  explicit Service(const char *uuid);
+  explicit Service(const UUID &uuid);
+  ~Service();
 
-    Server *         getServer();
+public:
+  static Server *getServer();
 
-    UUID getUUID();
-    uint16_t              getHandle();
-    std::string           toString();
-    void                  dump();
+public:
+  UUID getUUID();
+  uint16_t getHandle();
+  std::string toString();
+  void dump();
 
-    bool                  start();
+public:
+  bool start();
 
-    Characteristic * createCharacteristic(const char* uuid,
-                                              uint32_t properties =
-                                              NIMBLE_PROPERTY::READ |
-                                              NIMBLE_PROPERTY::WRITE,
-                                              uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
+public:
+  CharacteristicPtr createCharacteristic(const char *uuid, uint32_t properties = Property::READ | Property::WRITE, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
+  CharacteristicPtr createCharacteristic(const UUID &uuid, uint32_t properties = Property::READ | Property::WRITE, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
+  CharacteristicPtr createCharacteristic(uint16_t uuid, uint32_t properties = Property::READ | Property::WRITE, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
 
-    Characteristic * createCharacteristic(const UUID &uuid,
-                                               uint32_t properties =
-                                               NIMBLE_PROPERTY::READ |
-                                               NIMBLE_PROPERTY::WRITE,
-                                               uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
+public:
+  void addCharacteristic(Characteristic *pCharacteristic);
+  void removeCharacteristic(Characteristic *pCharacteristic, bool deleteChr = false);
+  CharacteristicPtr getCharacteristic(const char *uuid, uint16_t instanceId = 0);
+  CharacteristicPtr getCharacteristic(const UUID &uuid, uint16_t instanceId = 0);
+  CharacteristicPtr getCharacteristicByHandle(uint16_t handle);
 
-    void                  addCharacteristic(Characteristic * pCharacteristic);
-    void                  removeCharacteristic(Characteristic * pCharacteristic, bool deleteChr = false);
-    Characteristic * getCharacteristic(const char* uuid, uint16_t instanceId = 0);
-    Characteristic * getCharacteristic(const UUID &uuid, uint16_t instanceId = 0);
-    Characteristic * getCharacteristicByHandle(uint16_t handle);
-
-    std::vector<Characteristic *> getCharacteristics();
-    std::vector<Characteristic *> getCharacteristics(const char* uuid);
-    std::vector<Characteristic *> getCharacteristics(const UUID &uuid);
-
+  Characteristics getCharacteristics();
+  Characteristics getCharacteristics(const char *uuid);
+  Characteristics getCharacteristics(const UUID &uuid);
 
 private:
+  uint16_t m_handle;
+  UUID m_uuid;
+  ble_gatt_svc_def *m_pSvcDef;
+  uint8_t m_removed;
+  Characteristics m_characteristics;
 
-    friend class Server;
-    friend class          NimBLEDevice;
+};// NimBLEService
 
-    uint16_t              m_handle;
-    UUID m_uuid;
-    ble_gatt_svc_def*     m_pSvcDef;
-    uint8_t               m_removed;
-    std::vector<Characteristic *> m_chrVec;
-
-}; // NimBLEService
-
-}
+}// namespace nimble
 
 #endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */

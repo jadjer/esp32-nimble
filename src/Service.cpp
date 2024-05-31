@@ -32,8 +32,8 @@ static const char *LOG_TAG = "NimBLEService";// Tag for logging.
  * @brief Construct an instance of the NimBLEService
  * @param [in] uuid The UUID of the service.
  */
-Service::Service(const char *uuid)
-    : Service(UUID(uuid)) {
+Service::Service(char const *uuid) : Service(UUID(uuid)) {
+  (void) uuid;
 }
 
 /**
@@ -52,7 +52,7 @@ Service::~Service() {
   if (m_pSvcDef != nullptr) {
     if (m_pSvcDef->characteristics != nullptr) {
       for (int i = 0; m_pSvcDef->characteristics[i].uuid != nullptr; ++i) {
-          delete (m_pSvcDef->characteristics[i].descriptors);
+        delete (m_pSvcDef->characteristics[i].descriptors);
       }
       delete (m_pSvcDef->characteristics);
     }
@@ -60,8 +60,8 @@ Service::~Service() {
     delete (m_pSvcDef);
   }
 
-  for (auto &it : m_chrVec) {
-    delete it;
+  for (auto const &characteristic : m_characteristics) {
+    delete characteristic;
   }
 }
 
@@ -69,23 +69,27 @@ Service::~Service() {
  * @brief Dump details of this BLE GATT service.
  */
 void Service::dump() {
-  NIMBLE_LOGD(LOG_TAG, "Service: uuid:%s, handle: 0x%2x",m_uuid.toString().c_str(),m_handle);
+  NIMBLE_LOGD(LOG_TAG, "Service: uuid:%s, handle: 0x%2x", m_uuid.toString().c_str(), m_handle);
 
   std::string res;
   int count = 0;
   char hex[5];
-  for (auto &it : m_chrVec) {
+  for (auto const &characteristic : m_characteristics) {
     if (count > 0) {
       res += "\n";
     }
-    snprintf(hex, sizeof(hex), "%04x", it->getHandle());
+    snprintf(hex, sizeof(hex), "%04x", characteristic->getHandle());
     count++;
     res += "handle: 0x";
     res += hex;
-    res += ", uuid: " + std::string(it->getUUID());
+    res += ", uuid: " + std::string(characteristic->getUUID());
   }
   NIMBLE_LOGD(LOG_TAG, "Characteristics:\n%s", res.c_str());
 }// dump
+
+Server *Service::getServer() {
+  return Device::getServer();
+}
 
 /**
  * @brief Get the UUID of the service.
@@ -106,9 +110,7 @@ bool Service::start() {
   // Rebuild the service definition if the server attributes have changed.
   if (getServer()->m_svcChanged && m_pSvcDef != nullptr) {
     if (m_pSvcDef[0].characteristics) {
-      if (m_pSvcDef[0].characteristics[0].descriptors) {
-        delete (m_pSvcDef[0].characteristics[0].descriptors);
-      }
+      delete (m_pSvcDef[0].characteristics[0].descriptors);
       delete (m_pSvcDef[0].characteristics);
     }
     delete (m_pSvcDef);
@@ -120,19 +122,19 @@ bool Service::start() {
     // Since we are adding 1 at a time we create an array of 2 and set the type
     // of the second service to 0 to indicate the end of the array.
     auto svc = new ble_gatt_svc_def[2];
-    ble_gatt_chr_def *pChr_a = nullptr;
-    ble_gatt_dsc_def *pDsc_a = nullptr;
+    ble_gatt_chr_def *pChr_a;
+    ble_gatt_dsc_def *pDsc_a;
 
     svc[0].type = BLE_GATT_SVC_TYPE_PRIMARY;
     svc[0].uuid = &m_uuid.getNative()->u;
     svc[0].includes = nullptr;
 
     int removedCount = 0;
-    for (auto it = m_chrVec.begin(); it != m_chrVec.end();) {
+    for (auto it = m_characteristics.begin(); it != m_characteristics.end();) {
       if ((*it)->m_removed > 0) {
         if ((*it)->m_removed == NIMBLE_ATT_REMOVE_DELETE) {
           delete *it;
-          it = m_chrVec.erase(it);
+          it = m_characteristics.erase(it);
         } else {
           ++removedCount;
           ++it;
@@ -143,7 +145,7 @@ bool Service::start() {
       ++it;
     }
 
-    size_t numChrs = m_chrVec.size() - removedCount;
+    size_t numChrs = m_characteristics.size() - removedCount;
     NIMBLE_LOGD(LOG_TAG, "Adding %d characteristics for service %s", numChrs, toString().c_str());
 
     if (!numChrs) {
@@ -154,17 +156,17 @@ bool Service::start() {
       // for this purpose.
       pChr_a = new ble_gatt_chr_def[numChrs + 1]{};
       int i = 0;
-      for (auto chr_it = m_chrVec.begin(); chr_it != m_chrVec.end(); ++chr_it) {
-        if ((*chr_it)->m_removed > 0) {
+      for (auto &m_characteristic : m_characteristics) {
+        if (m_characteristic->m_removed > 0) {
           continue;
         }
 
         removedCount = 0;
-        for (auto it = (*chr_it)->m_dscVec.begin(); it != (*chr_it)->m_dscVec.end();) {
+        for (auto it = m_characteristic->m_dscVec.begin(); it != m_characteristic->m_dscVec.end();) {
           if ((*it)->m_removed > 0) {
             if ((*it)->m_removed == NIMBLE_ATT_REMOVE_DELETE) {
               delete *it;
-              it = (*chr_it)->m_dscVec.erase(it);
+              it = m_characteristic->m_dscVec.erase(it);
             } else {
               ++removedCount;
               ++it;
@@ -175,7 +177,7 @@ bool Service::start() {
           ++it;
         }
 
-        size_t numDscs = (*chr_it)->m_dscVec.size() - removedCount;
+        size_t numDscs = m_characteristic->m_dscVec.size() - removedCount;
 
         if (!numDscs) {
           pChr_a[i].descriptors = nullptr;
@@ -183,15 +185,15 @@ bool Service::start() {
           // Must have last descriptor uuid = 0 so we have to create 1 extra
           pDsc_a = new ble_gatt_dsc_def[numDscs + 1];
           int d = 0;
-          for (auto dsc_it = (*chr_it)->m_dscVec.begin(); dsc_it != (*chr_it)->m_dscVec.end(); ++dsc_it) {
-            if ((*dsc_it)->m_removed > 0) {
+          for (auto &dsc_it : m_characteristic->m_dscVec) {
+            if (dsc_it->m_removed > 0) {
               continue;
             }
-            pDsc_a[d].uuid = &(*dsc_it)->m_uuid.getNative()->u;
-            pDsc_a[d].att_flags = (*dsc_it)->m_properties;
+            pDsc_a[d].uuid = &dsc_it->m_uuid.getNative()->u;
+            pDsc_a[d].att_flags = dsc_it->m_properties;
             pDsc_a[d].min_key_size = 0;
             pDsc_a[d].access_cb = Descriptor::handleGapEvent;
-            pDsc_a[d].arg = (*dsc_it);
+            pDsc_a[d].arg = dsc_it;
             ++d;
           }
 
@@ -199,12 +201,12 @@ bool Service::start() {
           pChr_a[i].descriptors = pDsc_a;
         }
 
-        pChr_a[i].uuid = &(*chr_it)->m_uuid.getNative()->u;
+        pChr_a[i].uuid = &m_characteristic->m_uuid.getNative()->u;
         pChr_a[i].access_cb = Characteristic::handleGapEvent;
-        pChr_a[i].arg = (*chr_it);
-        pChr_a[i].flags = (*chr_it)->m_properties;
+        pChr_a[i].arg = m_characteristic;
+        pChr_a[i].flags = m_characteristic->m_properties;
         pChr_a[i].min_key_size = 0;
-        pChr_a[i].val_handle = &(*chr_it)->m_handle;
+        pChr_a[i].val_handle = &m_characteristic->m_handle;
         ++i;
       }
 
@@ -263,38 +265,41 @@ Characteristic *Service::createCharacteristic(const char *uuid, uint32_t propert
  * @return The new BLE characteristic.
  */
 Characteristic *Service::createCharacteristic(const UUID &uuid, uint32_t properties, uint16_t max_len) {
-  Characteristic *pCharacteristic = new Characteristic(uuid, properties, max_len, this);
+  auto characteristic = new Characteristic(uuid, properties, max_len, this);
 
   if (getCharacteristic(uuid) != nullptr) {
-    NIMBLE_LOGD(LOG_TAG, "<< Adding a duplicate characteristic with UUID: %s",
-                std::string(uuid).c_str());
+    NIMBLE_LOGD(LOG_TAG, "<< Adding a duplicate characteristic with UUID: %s", std::string(uuid).c_str());
   }
 
-  addCharacteristic(pCharacteristic);
-  return pCharacteristic;
+  addCharacteristic(characteristic);
+  return characteristic;
 }// createCharacteristic
+
+CharacteristicPtr Service::createCharacteristic(uint16_t uuid, uint32_t properties, uint16_t max_len) {
+  return createCharacteristic(UUID(uuid), properties, max_len);
+}
 
 /**
  * @brief Add a characteristic to the service.
  * @param[in] pCharacteristic A pointer to the characteristic instance to add to the service.
  */
-void Service::addCharacteristic(Characteristic *pCharacteristic) {
+void Service::addCharacteristic(Characteristic *characteristic) {
   bool foundRemoved = false;
 
-  if (pCharacteristic->m_removed > 0) {
-    for (auto &it : m_chrVec) {
-      if (it == pCharacteristic) {
+  if (characteristic->m_removed > 0) {
+    for (auto const &characteristicInMemory : m_characteristics) {
+      if (characteristic == characteristicInMemory) {
         foundRemoved = true;
-        pCharacteristic->m_removed = 0;
+        characteristic->m_removed = 0;
       }
     }
   }
 
-  if (!foundRemoved) {
-    m_chrVec.push_back(pCharacteristic);
+  if (not foundRemoved) {
+    m_characteristics.push_back(characteristic);
   }
 
-  pCharacteristic->setService(this);
+  characteristic->setService(this);
   getServer()->serviceChanged();
 }// addCharacteristic
 
@@ -309,9 +314,9 @@ void Service::removeCharacteristic(Characteristic *pCharacteristic, bool deleteC
   // Otherwise, ignore the call and return.
   if (pCharacteristic->m_removed > 0) {
     if (deleteChr) {
-      for (auto it = m_chrVec.begin(); it != m_chrVec.end(); ++it) {
+      for (auto it = m_characteristics.begin(); it != m_characteristics.end(); ++it) {
         if ((*it) == pCharacteristic) {
-          m_chrVec.erase(it);
+          m_characteristics.erase(it);
           delete *it;
           break;
         }
@@ -343,10 +348,10 @@ Characteristic *Service::getCharacteristic(const char *uuid, uint16_t instanceId
  */
 Characteristic *Service::getCharacteristic(const UUID &uuid, uint16_t instanceId) {
   uint16_t position = 0;
-  for (auto &it : m_chrVec) {
-    if (it->getUUID() == uuid) {
+  for (auto const &characteristic : m_characteristics) {
+    if (characteristic->getUUID() == uuid) {
       if (position == instanceId) {
-        return it;
+        return characteristic;
       }
       position++;
     }
@@ -360,9 +365,9 @@ Characteristic *Service::getCharacteristic(const UUID &uuid, uint16_t instanceId
  * @return A pointer to the characteristic object or nullptr if not found.
  */
 Characteristic *Service::getCharacteristicByHandle(uint16_t handle) {
-  for (auto &it : m_chrVec) {
-    if (it->getHandle() == handle) {
-      return it;
+  for (auto const &characteristic : m_characteristics) {
+    if (characteristic->getHandle() == handle) {
+      return characteristic;
     }
   }
   return nullptr;
@@ -372,7 +377,7 @@ Characteristic *Service::getCharacteristicByHandle(uint16_t handle) {
  * @return A vector containing pointers to each characteristic associated with this service.
  */
 std::vector<Characteristic *> Service::getCharacteristics() {
-  return m_chrVec;
+  return m_characteristics;
 }
 
 /**
@@ -387,9 +392,9 @@ std::vector<Characteristic *> Service::getCharacteristics(const char *uuid) {
  */
 std::vector<Characteristic *> Service::getCharacteristics(const UUID &uuid) {
   std::vector<Characteristic *> result;
-  for (auto &it : m_chrVec) {
-    if (it->getUUID() == uuid) {
-      result.push_back(it);
+  for (auto const &characteristic : m_characteristics) {
+    if (characteristic->getUUID() == uuid) {
+      result.push_back(characteristic);
     }
   }
   return result;
@@ -409,16 +414,10 @@ std::string Service::toString() {
   res += ", handle: 0x";
   res += hex;
   return res;
-}// toString
-
-/**
- * @brief Get the BLE server associated with this service.
- * @return The BLEServer associated with this service.
- */
-Server *Service::getServer() {
-  return Device::getServer();
-}// getServer
-
 }
+
+// toString
+
+}// namespace nimble
 
 #endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */

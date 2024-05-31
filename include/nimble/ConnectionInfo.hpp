@@ -14,7 +14,14 @@
 
 #pragma once
 
+#include <host/ble_gap.h>
+
 #include "nimble/Address.hpp"
+
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
 
 namespace nimble {
 
@@ -33,10 +40,10 @@ class ConnectionInfo {
 
 public:
   /** @brief Gets the over-the-air address of the connected peer */
-  [[nodiscard]] Address getAddress() const { return {m_desc.peer_ota_addr}; }
+  [[nodiscard]] Address getAddress() const { return Address(m_desc.peer_ota_addr); }
 
   /** @brief Gets the ID address of the connected peer */
-  [[nodiscard]] Address getIdAddress() const { return {m_desc.peer_id_addr}; }
+  [[nodiscard]] Address getIdAddress() const { return Address(m_desc.peer_id_addr); }
 
   /** @brief Gets the connection handle of the connected peer */
   [[nodiscard]] uint16_t getConnHandle() const { return m_desc.conn_handle; }

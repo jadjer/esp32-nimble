@@ -17,16 +17,23 @@
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_NIMBLE_ENABLED)
 
+#include <list>
+#include <map>
+#include <string>
+
+#include <esp_bt.h>
+
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
+
 #if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
 #include "nimble/Scan.hpp"
 #endif
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
-#if CONFIG_BT_NIMBLE_EXT_ADV
-#include "nimble/NimBLEExtAdvertising.hpp"
-#else
 #include "nimble/Advertising.hpp"
-#endif
 #endif
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
@@ -40,15 +47,11 @@
 #include "nimble/Address.hpp"
 #include "nimble/Utils.hpp"
 
-#include "esp_bt.h"
-
-#include <list>
-#include <map>
-#include <string>
-
 typedef int (*gap_event_handler)(ble_gap_event *event, void *arg);
 
 extern "C" void ble_store_config_init(void);
+
+
 
 namespace nimble {
 
@@ -56,11 +59,28 @@ namespace nimble {
  * @brief A model of a %BLE Device from which all the BLE roles are created.
  */
 class Device {
+#if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+  friend class Client;
+#endif
+
+#if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
+  friend class Scan;
+#endif
+
+#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+  friend class Server;
+  friend class Characteristic;
+#endif
+
+#if defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
+  friend class Advertising;
+#endif
+
 public:
-  static void init(const std::string &deviceName);
+  static void init(std::string const &deviceName);
   static void deinit(bool clearAll = false);
-  static void setDeviceName(const std::string &deviceName);
-  static bool getInitialized();
+  static void setDeviceName(std::string const &deviceName);
+  static bool isInitialized();
   static Address getAddress();
   static std::string toString();
   static bool whiteListAdd(const Address &address);
@@ -70,25 +90,24 @@ public:
   static Address getWhiteListAddress(size_t index);
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
+public:
   static Scan *getScan();
 #endif
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+public:
   static Server *createServer();
   static Server *getServer();
 #endif
 
-#ifdef ESP_PLATFORM
+public:
   static void setPower(esp_power_level_t powerLevel, esp_ble_power_type_t powerType = ESP_BLE_PWR_TYPE_DEFAULT);
-  static int getPower(esp_ble_power_type_t powerType = ESP_BLE_PWR_TYPE_DEFAULT);
+  static int8_t getPower(esp_ble_power_type_t powerType = ESP_BLE_PWR_TYPE_DEFAULT);
   static void setOwnAddrType(uint8_t own_addr_type, bool useNRPA = false);
   static void setScanDuplicateCacheSize(uint16_t cacheSize);
   static void setScanFilterMode(uint8_t type);
-#else
-  static void setPower(int dbm);
-  static int getPower();
-#endif
 
+public:
   static void setCustomGapHandler(gap_event_handler handler);
   static void setSecurityAuth(bool bonding, bool mitm, bool sc);
   static void setSecurityAuth(uint8_t auth_req);
@@ -105,22 +124,14 @@ public:
   static void removeIgnored(const Address &address);
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
-#if CONFIG_BT_NIMBLE_EXT_ADV
-  static NimBLEExtAdvertising *getAdvertising();
-  static bool startAdvertising(uint8_t inst_id,
-                               int duration = 0,
-                               int max_events = 0);
-  static bool stopAdvertising(uint8_t inst_id);
-  static bool stopAdvertising();
-#endif
-#if !CONFIG_BT_NIMBLE_EXT_ADV || defined(_DOXYGEN_)
+public:
   static Advertising *getAdvertising();
   static bool startAdvertising(uint32_t duration = 0);
   static bool stopAdvertising();
 #endif
-#endif
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+public:
   static Client *createClient(Address peerAddress = Address(""));
   static bool deleteClient(Client *pClient);
   static Client *getClientByID(uint16_t conn_id);
@@ -131,6 +142,7 @@ public:
 #endif
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL) || defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+public:
   static bool deleteBond(const Address &address);
   static int getNumBonds();
   static bool isBonded(const Address &address);
@@ -139,31 +151,14 @@ public:
 #endif
 
 private:
-#if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-  friend class Client;
-#endif
-
-#if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
-  friend class Scan;
-#endif
-
-#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
-  friend class Server;
-  friend class Characteristic;
-#endif
-
-#if defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
-  friend class Advertising;
-#if CONFIG_BT_NIMBLE_EXT_ADV
-  friend class NimBLEExtAdvertising;
-  friend class NimBLEExtAdvertisement;
-#endif
-#endif
-
   static void onReset(int reason);
-  static void onSync(void);
-  static void host_task(void *param);
-  static bool m_synced;
+  static void onSync();
+  static void hostTask(void *param);
+
+private:
+  static bool m_isInitialized;
+  static bool m_isSynced;
+  static std::string m_deviceName;
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
   static Scan *m_pScan;
@@ -174,11 +169,7 @@ private:
 #endif
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
-#if CONFIG_BT_NIMBLE_EXT_ADV
-  static NimBLEExtAdvertising *m_bleAdvertising;
-#else
   static Advertising *m_bleAdvertising;
-#endif
 #endif
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
@@ -196,6 +187,6 @@ private:
   static std::vector<Address> m_whiteList;
 };
 
-}
+}// namespace nimble
 
 #endif// CONFIG_BT_ENABLED

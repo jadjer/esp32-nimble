@@ -17,16 +17,15 @@
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_NIMBLE_ENABLED)
 
-#include "nimble/Log.hpp"
-
-/****  FIX COMPILATION ****/
-#undef min
-#undef max
-/**************************/
-
-#include <ctime>
 #include <string>
+#include <cstring>
+#include <ctime>
 #include <vector>
+
+#include <host/ble_att.h>
+#include <nimble/nimble_npl.h>
+
+#include "nimble/Log.hpp"
 
 #ifndef CONFIG_NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED
 #define CONFIG_NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED 0
@@ -44,6 +43,11 @@
 #error CONFIG_NIMBLE_CPP_ATT_VALUE_INIT_LENGTH cannot be less than 1; Range = 1 : 512
 #endif
 
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
+
 namespace nimble {
 
 /* Used to determine if the type passed to a template has a c_str() and length() method. */
@@ -51,8 +55,7 @@ template<typename T, typename = void, typename = void>
 struct Has_c_str_len : std::false_type {};
 
 template<typename T>
-struct Has_c_str_len<T, decltype(void(std::declval<T &>().c_str())),
-                     decltype(void(std::declval<T &>().length()))> : std::true_type {};
+struct Has_c_str_len<T, decltype(void(std::declval<T &>().c_str())), decltype(void(std::declval<T &>().length()))> : std::true_type {};
 
 /**
  * @brief A specialized container class to hold BLE attribute values.
@@ -76,8 +79,7 @@ public:
      * @param[in] init_len The initial size in bytes.
      * @param[in] max_len The max size in bytes that the value can be.
      */
-  AttributeValue(uint16_t init_len = CONFIG_NIMBLE_CPP_ATT_VALUE_INIT_LENGTH,
-                 uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
+  explicit AttributeValue(uint16_t init_len = CONFIG_NIMBLE_CPP_ATT_VALUE_INIT_LENGTH, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
 
   /**
      * @brief Construct with an initial value from a buffer.
@@ -85,51 +87,35 @@ public:
      * @param[in] len The size in bytes of the value to set.
      * @param[in] max_len The max size in bytes that the value can be.
      */
-  AttributeValue(const uint8_t *value, uint16_t len,
-                 uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
+  AttributeValue(const uint8_t *value, uint16_t len, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
 
   /**
      * @brief Construct with an initializer list.
      * @param list An initializer list containing the initial value to set.
      * @param[in] max_len The max size in bytes that the value can be.
      */
-  AttributeValue(std::initializer_list<uint8_t> list,
-                 uint16_t max_len = BLE_ATT_ATTR_MAX_LEN)
-      : AttributeValue(list.begin(), (uint16_t) list.size(), max_len) {}
+  AttributeValue(std::initializer_list<uint8_t> list, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN) : AttributeValue(list.begin(), (uint16_t) list.size(), max_len) {}
 
   /**
      * @brief Construct with an initial value from a const char string.
      * @param value A pointer to the initial value to set.
      * @param[in] max_len The max size in bytes that the value can be.
      */
-  AttributeValue(const char *value, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN)
-      : AttributeValue((uint8_t *) value, (uint16_t) strlen(value), max_len) {}
+  explicit AttributeValue(const char *value, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN) : AttributeValue((uint8_t *) value, (uint16_t) strlen(value), max_len) {}
 
   /**
      * @brief Construct with an initial value from a std::string.
      * @param str A std::string containing to the initial value to set.
      * @param[in] max_len The max size in bytes that the value can be.
      */
-  AttributeValue(const std::string str, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN)
-      : AttributeValue((uint8_t *) str.data(), (uint16_t) str.length(), max_len) {}
+  explicit AttributeValue(std::string const &str, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN) : AttributeValue((uint8_t *) str.data(), (uint16_t) str.length(), max_len) {}
 
   /**
      * @brief Construct with an initial value from a std::vector<uint8_t>.
      * @param vec A std::vector<uint8_t> containing to the initial value to set.
      * @param[in] max_len The max size in bytes that the value can be.
      */
-  AttributeValue(const std::vector<uint8_t> vec, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN)
-      : AttributeValue(&vec[0], (uint16_t) vec.size(), max_len) {}
-
-#ifdef NIMBLE_CPP_ARDUINO_STRING_AVAILABLE
-  /**
-     * @brief Construct with an initial value from an Arduino String.
-     * @param str An Arduino String containing to the initial value to set.
-     * @param[in] max_len The max size in bytes that the value can be.
-     */
-  NimBLEAttValue(const String str, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN)
-      : NimBLEAttValue((uint8_t *) str.c_str(), str.length(), max_len) {}
-#endif
+  explicit AttributeValue(std::vector<uint8_t> const &vec, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN) : AttributeValue(&vec[0], (uint16_t) vec.size(), max_len) {}
 
   /** @brief Copy constructor */
   AttributeValue(const AttributeValue &source) { deepCopy(source); }
@@ -141,28 +127,28 @@ public:
   ~AttributeValue();
 
   /** @brief Returns the max size in bytes */
-  uint16_t max_size() const { return m_attr_max_len; }
+  [[nodiscard]] uint16_t max_size() const { return m_attr_max_len; }
 
   /** @brief Returns the currently allocated capacity in bytes */
-  uint16_t capacity() const { return m_capacity; }
+  [[nodiscard]] uint16_t capacity() const { return m_capacity; }
 
   /** @brief Returns the current length of the value in bytes */
-  uint16_t length() const { return m_attr_len; }
+  [[nodiscard]] uint16_t length() const { return m_attr_len; }
 
   /** @brief Returns the current size of the value in bytes */
-  uint16_t size() const { return m_attr_len; }
+  [[nodiscard]] uint16_t size() const { return m_attr_len; }
 
   /** @brief Returns a pointer to the internal buffer of the value */
-  const uint8_t *data() const { return m_attr_value; }
+  [[nodiscard]] const uint8_t *data() const { return m_attr_value; }
 
   /** @brief Returns a pointer to the internal buffer of the value as a const char* */
-  const char *c_str() const { return (const char *) m_attr_value; }
+  [[nodiscard]] const char *c_str() const { return (const char *) m_attr_value; }
 
   /** @brief Iterator begin */
-  const uint8_t *begin() const { return m_attr_value; }
+  [[nodiscard]] const uint8_t *begin() const { return m_attr_value; }
 
   /** @brief Iterator end */
-  const uint8_t *end() const { return m_attr_value + m_attr_len; }
+  [[nodiscard]] const uint8_t *end() const { return m_attr_value + m_attr_len; }
 
 #if CONFIG_NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED
   /** @brief Returns a timestamp of when the value was last updated */
@@ -221,11 +207,7 @@ public:
      * @details Only used for types without a `c_str()` method.
      */
   template<typename T>
-#ifdef _DOXYGEN_
-  bool
-#else
   typename std::enable_if<!Has_c_str_len<T>::value, bool>::type
-#endif
   setValue(const T &s) {
     return setValue((uint8_t *) &s, sizeof(T));
   }
@@ -236,11 +218,7 @@ public:
      * @details Only used if the <type\> has a `c_str()` method.
      */
   template<typename T>
-#ifdef _DOXYGEN_
-  bool
-#else
   typename std::enable_if<Has_c_str_len<T>::value, bool>::type
-#endif
   setValue(const T &s) {
     return setValue((uint8_t *) s.c_str(), (uint16_t) s.length());
   }
@@ -272,17 +250,17 @@ public:
   }
 
   /** @brief Operator; Get the value as a std::vector<uint8_t>. */
-  operator std::vector<uint8_t>() const {
-    return std::vector<uint8_t>(m_attr_value, m_attr_value + m_attr_len);
+  explicit operator std::vector<uint8_t>() const {
+    return {m_attr_value, m_attr_value + m_attr_len};
   }
 
   /** @brief Operator; Get the value as a std::string. */
-  operator std::string() const {
+  explicit operator std::string() const {
     return std::string((char *) m_attr_value, m_attr_len);
   }
 
   /** @brief Operator; Get the value as a const uint8_t*. */
-  operator const uint8_t *() const { return m_attr_value; }
+  explicit operator const uint8_t *() const { return m_attr_value; }
 
   /** @brief Operator; Append another NimBLEAttValue. */
   AttributeValue &operator+=(const AttributeValue &source) {
@@ -303,19 +281,17 @@ public:
 
   /** @brief Equality operator */
   bool operator==(const AttributeValue &source) {
-    return (m_attr_len == source.size()) ? memcmp(m_attr_value, source.data(), m_attr_len) == 0 : false;
+    return (m_attr_len == source.size()) and memcmp(m_attr_value, source.data(), m_attr_len) == 0;
   }
 
   /** @brief Inequality operator */
   bool operator!=(const AttributeValue &source) { return !(*this == source); }
-
-#ifdef NIMBLE_CPP_ARDUINO_STRING_AVAILABLE
-  /** @brief Operator; Get the value as an Arduino String value. */
-  operator String() const { return String((char *) m_attr_value); }
-#endif
 };
 
 inline AttributeValue::AttributeValue(uint16_t init_len, uint16_t max_len) {
+  assert(init_len > 1);
+  assert(init_len < BLE_ATT_ATTR_MAX_LEN);
+
   m_attr_value = (uint8_t *) calloc(init_len + 1, 1);
   assert(m_attr_value && "No Mem");
   m_attr_max_len = std::min(BLE_ATT_ATTR_MAX_LEN, (int) max_len);
@@ -385,8 +361,7 @@ inline const uint8_t *AttributeValue::getValue(time_t *timestamp) {
 
 inline bool AttributeValue::setValue(const uint8_t *value, uint16_t len) {
   if (len > m_attr_max_len) {
-    NIMBLE_LOGE("NimBLEAttValue", "value exceeds max, len=%u, max=%u",
-                len, m_attr_max_len);
+    NIMBLE_LOGE("NimBLEAttValue", "value exceeds max, len=%u, max=%u", len, m_attr_max_len);
     return false;
   }
 
@@ -419,8 +394,7 @@ inline AttributeValue &AttributeValue::append(const uint8_t *value, uint16_t len
   }
 
   if ((m_attr_len + len) > m_attr_max_len) {
-    NIMBLE_LOGE("NimBLEAttValue", "val > max, len=%u, max=%u",
-                len, m_attr_max_len);
+    NIMBLE_LOGE("NimBLEAttValue", "val > max, len=%u, max=%u", len, m_attr_max_len);
     return *this;
   }
 
@@ -449,6 +423,6 @@ inline AttributeValue &AttributeValue::append(const uint8_t *value, uint16_t len
   return *this;
 }
 
-}
+}// namespace nimble
 
 #endif /*(CONFIG_BT_ENABLED) */

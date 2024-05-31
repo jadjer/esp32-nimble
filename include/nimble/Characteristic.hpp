@@ -17,15 +17,20 @@
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_NIMBLE_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
-#include "host/ble_hs.h"
+#include <host/ble_hs.h>
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
+#include <string>
+
+#include <vector>
 
 #include "nimble/AttributeValue.hpp"
 #include "nimble/ConnectionInfo.hpp"
 #include "nimble/Descriptor.hpp"
-#include "nimble/Service.hpp"
 
-#include <string>
-#include <vector>
+
 
 namespace nimble {
 
@@ -45,8 +50,10 @@ typedef enum {
 } Property;
 
 class Service;
-class Descriptor;
 class CharacteristicCallbacks;
+
+using DescriptorPtr = Descriptor *;
+using Descriptors = std::vector<DescriptorPtr>;
 
 /**
  * @brief The model of a %BLE Characteristic.
@@ -55,9 +62,12 @@ class CharacteristicCallbacks;
  * can be read and written to by a %BLE client.
  */
 class Characteristic {
+  friend class Service;
+
 public:
-  explicit Characteristic(const char *uuid, uint16_t properties = Property::READ | Property::WRITE, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN, Service *pService = nullptr);
-  explicit Characteristic(const UUID &uuid, uint16_t properties = Property::READ | Property::WRITE, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN, Service *pService = nullptr);
+  explicit Characteristic(const char *uuid, uint16_t properties = Property::READ | Property::WRITE, uint16_t maxLen = BLE_ATT_ATTR_MAX_LEN, Service *pService = nullptr);
+  explicit Characteristic(const UUID &uuid, uint16_t properties = Property::READ | Property::WRITE, uint16_t maxLen = BLE_ATT_ATTR_MAX_LEN, Service *pService = nullptr);
+  explicit Characteristic(uint16_t uuid, uint16_t properties = Property::READ | Property::WRITE, uint16_t maxLen = BLE_ATT_ATTR_MAX_LEN, Service *pService = nullptr);
 
   ~Characteristic();
 
@@ -85,8 +95,9 @@ public:
   void setValue(const std::vector<uint8_t> &vec);
   void setCallbacks(CharacteristicCallbacks *pCallbacks);
 
-  Descriptor *createDescriptor(const char *uuid, uint32_t properties = NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
-  Descriptor *createDescriptor(const UUID &uuid, uint32_t properties = NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
+  Descriptor *createDescriptor(const char *uuid, uint32_t properties = Property::READ | Property::WRITE, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
+  Descriptor *createDescriptor(const UUID &uuid, uint32_t properties = Property::READ | Property::WRITE, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
+  Descriptor *createDescriptor(uint16_t uuid, uint32_t properties = Property::READ | Property::WRITE, uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
 
   CharacteristicCallbacks *getCallbacks();
 
@@ -138,13 +149,11 @@ public:
   }
 
 private:
-  friend class Server;
-  friend class Service;
-
   void setService(Service *pService);
   void setSubscribe(struct ble_gap_event *event);
   static int handleGapEvent(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg);
 
+private:
   UUID m_uuid;
   uint16_t m_handle;
   uint16_t m_properties;
@@ -157,6 +166,8 @@ private:
   std::vector<std::pair<uint16_t, uint16_t>> m_subscribedVec;
 };// NimBLECharacteristic
 
+using CharacteristicPtr = Characteristic *;
+
 /**
  * @brief Callbacks that can be associated with a %BLE characteristic to inform of events.
  *
@@ -167,13 +178,13 @@ private:
 class CharacteristicCallbacks {
 public:
   virtual ~CharacteristicCallbacks() = default;
-  virtual void onRead(Characteristic *pCharacteristic, ConnectionInfo &connInfo);
-  virtual void onWrite(Characteristic *pCharacteristic, ConnectionInfo &connInfo);
-  virtual void onNotify(Characteristic *pCharacteristic);
-  virtual void onStatus(Characteristic *pCharacteristic, int code);
-  virtual void onSubscribe(Characteristic *pCharacteristic, ConnectionInfo &connInfo, uint16_t subValue);
+  virtual void onRead(CharacteristicPtr characteristic, ConnectionInfo &connInfo);
+  virtual void onWrite(CharacteristicPtr characteristic, ConnectionInfo &connInfo);
+  virtual void onNotify(CharacteristicPtr characteristic);
+  virtual void onStatus(CharacteristicPtr characteristic, int code);
+  virtual void onSubscribe(CharacteristicPtr characteristic, ConnectionInfo &connInfo, uint16_t subValue);
 };
 
-}
+}// namespace nimble
 
 #endif /* CONFIG_BT_ENABLED  && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */

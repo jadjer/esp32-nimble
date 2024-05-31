@@ -117,7 +117,7 @@ UUID Descriptor::getUUID() {
  * @brief Get the value of this descriptor.
  * @return The NimBLEAttValue of this descriptor.
  */
-AttValue Descriptor::getValue(time_t *timestamp) {
+AttributeValue Descriptor::getValue(time_t *timestamp) {
   if (timestamp != nullptr) {
     m_value.getValue(timestamp);
   }
